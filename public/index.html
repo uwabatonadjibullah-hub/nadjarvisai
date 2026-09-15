@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>NAD Jarvis</title>
+  <title>NAD Jarvis AI</title>
   <meta name="description"
     content="NAD Jarvis is a private, voice-activated personal AI assistant for daily workflows, cloud drives, and scheduling.">
 
@@ -50,26 +50,35 @@
         </button>
       </div>
 
-      <nav class="sidebar-nav">
+      <!-- Scrollable Navigation Items -->
+      <nav class="sidebar-nav" id="sidebar-nav">
         <button class="nav-item active" data-view="new-chat">
           <i class="fa-solid fa-plus nav-icon"></i>
           <span>New Chat</span>
         </button>
-        <button class="nav-item" data-view="chat-ai">
-          <i class="fa-solid fa-message nav-icon"></i>
-          <span>Chat AI</span>
+        <button class="nav-item" data-view="search">
+          <i class="fa-solid fa-magnifying-glass nav-icon"></i>
+          <span>Search Chat</span>
         </button>
-        <button class="nav-item" data-view="audio-ai">
-          <i class="fa-solid fa-microphone nav-icon"></i>
-          <span>Audio AI</span>
-        </button>
-        <button class="nav-item" data-view="schedule">
-          <i class="fa-solid fa-calendar-days nav-icon"></i>
-          <span>Schedule</span>
+        <button class="nav-item" data-view="accounts">
+          <i class="fa-solid fa-users-gear nav-icon"></i>
+          <span>Accounts</span>
         </button>
         <button class="nav-item" data-view="drives">
           <i class="fa-solid fa-hard-drive nav-icon"></i>
-          <span>Drives / Memories</span>
+          <span>Drives</span>
+        </button>
+        <button class="nav-item" data-view="calendar">
+          <i class="fa-solid fa-calendar-days nav-icon"></i>
+          <span>Calendar</span>
+        </button>
+        <button class="nav-item" data-view="tasks">
+          <i class="fa-solid fa-list-check nav-icon"></i>
+          <span>Tasks</span>
+        </button>
+        <button class="nav-item" data-view="audio-ai">
+          <i class="fa-solid fa-microphone nav-icon"></i>
+          <span>Voice</span>
         </button>
         <button class="nav-item" data-view="settings">
           <i class="fa-solid fa-sliders nav-icon"></i>
@@ -77,12 +86,16 @@
         </button>
       </nav>
 
+      <!-- Dynamic Conversation History Container -->
       <div class="sidebar-history">
-        <div class="history-title">Recent History</div>
-        <div class="history-list">
-          <div class="history-item"><i class="fa-regular fa-comment"></i> Weekly schedule plan</div>
-          <div class="history-item"><i class="fa-regular fa-comment"></i> Google Drive Q3 report</div>
-          <div class="history-item"><i class="fa-regular fa-comment"></i> Mega backup sync</div>
+        <div class="history-header">
+          <span class="history-title">Recent Chats</span>
+          <button id="btn-refresh-history" class="btn-icon-xs" title="Refresh conversation history">
+            <i class="fa-solid fa-rotate-right"></i>
+          </button>
+        </div>
+        <div class="history-list" id="conversation-history-list">
+          <div class="history-empty"><i class="fa-regular fa-comment-dots"></i> Loading conversations...</div>
         </div>
       </div>
 
@@ -107,9 +120,22 @@
           </div>
         </div>
         <div class="topbar-right">
-          <div class="private-badge">
-            <i class="fa-solid fa-shield-halved"></i>
-            <span>Private Session</span>
+          <!-- Unauthenticated State: Log In Button -->
+          <a href="login.html" id="btn-topbar-login" class="btn-topbar-login">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            <span>Log In</span>
+          </a>
+
+          <!-- Authenticated Cluster -->
+          <div id="auth-status-cluster" class="auth-status-cluster" style="display: none;">
+            <div class="private-badge" id="btn-auth-badge" title="Click to view session info">
+              <i class="fa-solid fa-shield-halved"></i>
+              <span>Private Session</span>
+            </div>
+            <button id="btn-topbar-logout" class="btn-topbar-logout" title="Sign Out">
+              <i class="fa-solid fa-right-from-bracket"></i>
+              <span>Log Out</span>
+            </button>
           </div>
 
           <!-- Dark / Light Mode Toggle Button -->
@@ -122,76 +148,74 @@
 
       <!-- View Containers -->
 
-      <!-- VIEW 1: New Chat (Hero Section 5 with Infinite Brand Slider & Woven Light Background) -->
+      <!-- VIEW 1: New Chat (Unified Chat Home: Hero Section + Direct Interactive Stream) -->
       <section id="view-new-chat" class="view-section active">
-        <div class="hero-container">
-          <div class="hero-glass-card">
-            <h1 class="hero-title">NAD Jarvis AI</h1>
-            <p class="hero-subtitle">
-              Your private voice-activated digital companion. Intelligent reasoning, unified cloud storage management,
-              and smart scheduling.
-            </p>
+        <div class="chat-wrapper unified-chat-layout">
+          <!-- Collapsible Hero Banner Card -->
+          <div class="hero-container" id="hero-banner-container">
+            <div class="hero-glass-card">
+              <h1 class="hero-title">NAD Jarvis AI</h1>
+              <p class="hero-subtitle">
+                Your private voice-activated digital companion. Intelligent reasoning, unified cloud storage management,
+                and smart scheduling.
+              </p>
 
-            <!-- Bottom Control Cluster: Radiating Mic + Sinusoidal Bouncing Dots Pill -->
-            <div class="hero-controls-cluster">
-              <div class="mic-radiating-wrapper" id="mic-trigger-hero" title="Click to Speak (Audio AI)">
-                <div class="pulse-ring ring-1"></div>
-                <div class="pulse-ring ring-2"></div>
-                <div class="pulse-ring ring-3"></div>
-                <button class="mic-circle-btn" id="btn-mic-hero">
-                  <i class="fa-solid fa-microphone"></i>
-                </button>
+              <!-- Bottom Control Cluster: Radiating Mic + Sinusoidal Bouncing Dots Pill -->
+              <div class="hero-controls-cluster">
+                <div class="mic-radiating-wrapper" id="mic-trigger-hero" title="Click to Speak (Audio AI)">
+                  <div class="pulse-ring ring-1"></div>
+                  <div class="pulse-ring ring-2"></div>
+                  <div class="pulse-ring ring-3"></div>
+                  <button class="mic-circle-btn" id="btn-mic-hero">
+                    <i class="fa-solid fa-microphone"></i>
+                  </button>
+                </div>
+
+                <div class="chat-pill-trigger" id="pill-trigger-hero" title="Click to Focus Chat">
+                  <span class="pill-text">Start Interactive Chat</span>
+                  <div class="sinusoidal-dots">
+                    <span class="dot dot-1"></span>
+                    <span class="dot dot-2"></span>
+                    <span class="dot dot-3"></span>
+                  </div>
+                </div>
               </div>
+            </div>
 
-              <div class="chat-pill-trigger" id="pill-trigger-hero" title="Click to open Chat AI">
-                <span class="pill-text">Start Interactive Chat</span>
-                <div class="sinusoidal-dots">
-                  <span class="dot dot-1"></span>
-                  <span class="dot dot-2"></span>
-                  <span class="dot dot-3"></span>
+            <!-- Infinite Brand Logo Slider -->
+            <div class="brand-slider-section">
+              <div class="brand-slider-label">POWERING INTEGRATED WORKFLOWS & CLOUD ECOSYSTEMS</div>
+              <div class="brand-slider-container">
+                <div class="progressive-blur-left"></div>
+                <div class="progressive-blur-right"></div>
+
+                <div class="brand-slider-track">
+                  <div class="brand-logo"><i class="fa-brands fa-google-drive"></i></div>
+                  <div class="brand-logo"><i class="fa-brands fa-nvidia"></i></div>
+                  <div class="brand-logo"><i class="fa-brands fa-stripe"></i></div>
+                  <div class="brand-logo"><i class="fa-brands fa-github"></i></div>
+                  <div class="brand-logo"><i class="fa-brands fa-nike"></i></div>
+                  <div class="brand-logo"><i class="fa-solid fa-lemon"></i></div>
+                  <div class="brand-logo"><i class="fa-brands fa-laravel"></i></div>
+                  <div class="brand-logo"><i class="fa-brands fa-figma"></i></div>
+                  <div class="brand-logo"><i class="fa-solid fa-triangle-exclamation"></i></div>
+
+                  <!-- Loop Repeat -->
+                  <div class="brand-logo"><i class="fa-brands fa-google-drive"></i></div>
+                  <div class="brand-logo"><i class="fa-brands fa-nvidia"></i></div>
+                  <div class="brand-logo"><i class="fa-brands fa-stripe"></i></div>
+                  <div class="brand-logo"><i class="fa-brands fa-github"></i></div>
+                  <div class="brand-logo"><i class="fa-brands fa-nike"></i></div>
+                  <div class="brand-logo"><i class="fa-solid fa-lemon"></i></div>
+                  <div class="brand-logo"><i class="fa-brands fa-laravel"></i></div>
+                  <div class="brand-logo"><i class="fa-brands fa-figma"></i></div>
+                  <div class="brand-logo"><i class="fa-solid fa-triangle-exclamation"></i></div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Hero Section 5 - Infinite Brand Logo Slider with Progressive Blur Overlay -->
-          <div class="brand-slider-section">
-            <div class="brand-slider-label">POWERING INTEGRATED WORKFLOWS & CLOUD ECOSYSTEMS</div>
-            <div class="brand-slider-container">
-              <div class="progressive-blur-left"></div>
-              <div class="progressive-blur-right"></div>
-
-              <div class="brand-slider-track">
-                <!-- Duplicate logos for smooth infinite loop -->
-                <div class="brand-logo"><i class="fa-brands fa-google-drive"></i></div>
-                <div class="brand-logo"><i class="fa-brands fa-nvidia"></i></div>
-                <div class="brand-logo"><i class="fa-brands fa-stripe"></i></div>
-                <div class="brand-logo"><i class="fa-brands fa-github"></i></div>
-                <div class="brand-logo"><i class="fa-brands fa-nike"></i></div>
-                <div class="brand-logo"><i class="fa-solid fa-lemon"></i></div>
-                <div class="brand-logo"><i class="fa-brands fa-laravel"></i></div>
-                <div class="brand-logo"><i class="fa-brands fa-figma"></i></div>
-                <div class="brand-logo"><i class="fa-solid fa-triangle-exclamation"></i></div>
-
-                <!-- Loop Repeat -->
-                <div class="brand-logo"><i class="fa-brands fa-google-drive"></i></div>
-                <div class="brand-logo"><i class="fa-brands fa-nvidia"></i></div>
-                <div class="brand-logo"><i class="fa-brands fa-stripe"></i></div>
-                <div class="brand-logo"><i class="fa-brands fa-github"></i></div>
-                <div class="brand-logo"><i class="fa-brands fa-nike"></i></div>
-                <div class="brand-logo"><i class="fa-solid fa-lemon"></i></div>
-                <div class="brand-logo"><i class="fa-brands fa-laravel"></i></div>
-                <div class="brand-logo"><i class="fa-brands fa-figma"></i></div>
-                <div class="brand-logo"><i class="fa-solid fa-triangle-exclamation"></i></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- VIEW 2: Chat AI (WhatsApp Style Text Field & Message Stream) -->
-      <section id="view-chat-ai" class="view-section">
-        <div class="chat-wrapper">
+          <!-- Direct Message Stream (WhatsApp / ChatGPT Hybrid) -->
           <div class="chat-stream-container" id="chat-stream-container">
             <div class="chat-bubble ai-bubble">
               <img src="icon-logo.jpg" class="bubble-avatar" alt="Jarvis">
@@ -203,104 +227,103 @@
 
           <!-- WhatsApp Style Floating Input Bar -->
           <div class="whatsapp-chat-bar">
-            <button class="chat-action-btn" title="Attach Files"><i class="fa-solid fa-paperclip"></i></button>
-            <button class="chat-action-btn" title="Camera"><i class="fa-solid fa-camera"></i></button>
+            <button class="chat-action-btn" id="btn-chat-attach" title="Attach Files"><i class="fa-solid fa-paperclip"></i></button>
+            <button class="chat-action-btn" id="btn-chat-camera" title="Camera"><i class="fa-solid fa-camera"></i></button>
 
             <input type="text" id="chat-input-field" class="whatsapp-input"
               placeholder="Ask Jarvis or give a command... (e.g. Schedule meeting on Saturday at 10 AM)"
               autocomplete="off">
 
-            <button class="chat-action-btn" title="Record Audio"><i class="fa-solid fa-microphone"></i></button>
+            <button class="chat-action-btn" id="btn-chat-mic" title="Voice Input"><i class="fa-solid fa-microphone"></i></button>
             <button class="chat-send-btn" id="btn-chat-send" title="Send Message"><i
                 class="fa-solid fa-paper-plane"></i></button>
           </div>
         </div>
       </section>
 
-      <!-- VIEW 3: Audio AI (Sinusoidal Ocean Wave Canvas Visualizer) -->
-      <section id="view-audio-ai" class="view-section">
-        <div class="audio-ai-container">
-          <div class="audio-status-card">
-            <h2>Audio AI Voice Intelligence</h2>
-            <p id="txt-mic-status">Listening for "Hello, Jarvis"...</p>
+      <!-- VIEW 2: Search Chat (Full Page Search) -->
+      <section id="view-search" class="view-section">
+        <div class="feature-page-container">
+          <div class="section-header-wrap">
+            <h2>Search Conversations</h2>
+            <p>Query past dialogue, decisions, and instructions stored across your private chats.</p>
           </div>
 
-          <!-- Ocean Wave Canvas -->
-          <div class="wave-visualizer-card">
-            <canvas id="audio-wave-canvas"></canvas>
+          <div class="search-bar-card">
+            <div class="search-input-wrap">
+              <i class="fa-solid fa-magnifying-glass search-prefix-icon"></i>
+              <input type="text" id="chat-search-input" class="search-main-input"
+                placeholder="Type keywords to search past messages (e.g. Capstone, Solar, Calendar, Task)...">
+              <button id="btn-run-search" class="btn-primary-sm">Search</button>
+            </div>
           </div>
 
-          <div class="audio-controls">
-            <button class="mic-toggle-btn" id="btn-toggle-mic-listening">
-              <i class="fa-solid fa-microphone"></i>
+          <div id="search-results-wrapper" class="search-results-list">
+            <div class="empty-state-card">
+              <i class="fa-regular fa-comments empty-icon"></i>
+              <h3>Search Conversation Archives</h3>
+              <p>Type keywords above to search all previous chats and assistant interactions.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: Accounts (Connected Google Accounts & Integrations) -->
+      <section id="view-accounts" class="view-section">
+        <div class="feature-page-container">
+          <div class="section-header-wrap with-action">
+            <div>
+              <h2>Connected Accounts & Integrations</h2>
+              <p>Manage multi-account Google Workspace connections, OAuth tokens, and synced services.</p>
+            </div>
+            <button id="btn-add-google-account" class="btn-primary">
+              <i class="fa-brands fa-google"></i> Connect Google Account
             </button>
           </div>
-        </div>
-      </section>
 
-      <!-- VIEW 4: Schedule (Saturday to Friday Spreadsheet) -->
-      <section id="view-schedule" class="view-section">
-        <div class="schedule-container">
-          <div class="schedule-header">
-            <h2>Weekly Schedule Spreadsheet</h2>
-            <p>Week starts on Saturday and ends on Friday. Each row represents a 30-minute interval.</p>
-          </div>
-
-          <!-- Mobile Day Quick Filter Selector Pills -->
-          <div class="mobile-day-tabs" id="mobile-day-tabs">
-            <button class="mobile-day-pill active" data-day="all">All Days</button>
-            <button class="mobile-day-pill" data-day="sat">Sat</button>
-            <button class="mobile-day-pill" data-day="sun">Sun</button>
-            <button class="mobile-day-pill" data-day="mon">Mon</button>
-            <button class="mobile-day-pill" data-day="tue">Tue</button>
-            <button class="mobile-day-pill" data-day="wed">Wed</button>
-            <button class="mobile-day-pill" data-day="thu">Thu</button>
-            <button class="mobile-day-pill" data-day="fri">Fri</button>
-          </div>
-
-          <div class="spreadsheet-scroll-wrapper">
-            <table class="schedule-table">
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Saturday</th>
-                  <th>Sunday</th>
-                  <th>Monday</th>
-                  <th>Tuesday</th>
-                  <th>Wednesday</th>
-                  <th>Thursday</th>
-                  <th>Friday</th>
-                </tr>
-              </thead>
-              <tbody id="schedule-table-body">
-                <!-- Dynamically generated rows -->
-              </tbody>
-            </table>
+          <div id="accounts-cards-grid" class="accounts-cards-grid">
+            <div class="empty-state-card">
+              <i class="fa-solid fa-circle-notch fa-spin empty-icon"></i>
+              <p>Loading connected accounts...</p>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- VIEW 5: Drives / Memories (Google Drive & Mega Manager) -->
+      <!-- VIEW 4: Drives (Multi-Account Cloud Storage & Document Browser) -->
       <section id="view-drives" class="view-section">
-        <div class="drives-container">
-          <h2>Cloud Storage & Memories</h2>
-          <p>Collection of all connected drives (Google Drive & Mega Storage)</p>
+        <div class="feature-page-container">
+          <div class="section-header-wrap with-action">
+            <div>
+              <h2>Cloud Storage & Drives</h2>
+              <p>Unified storage management across Google Drive and cloud archives.</p>
+            </div>
+            <div class="drive-top-actions">
+              <select id="drive-account-select" class="drive-select-dropdown" title="Select Connected Drive">
+                <option value="google-primary">Nad's Google Drive</option>
+                <option value="mega-storage">Mega Storage Archive</option>
+              </select>
+              <button id="btn-refresh-drive" class="btn-secondary" title="Refresh drive files">
+                <i class="fa-solid fa-rotate-right"></i>
+              </button>
+              <button id="btn-upload-file-trigger" class="btn-primary">
+                <i class="fa-solid fa-upload"></i> Upload File
+              </button>
+              <input type="file" id="drive-file-input-hidden" style="display: none;">
+            </div>
+          </div>
 
+          <!-- Storage Overview Grid -->
           <div class="drive-cards-grid">
             <div class="drive-card">
               <div class="drive-icon"><i class="fa-brands fa-google-drive"></i></div>
               <div class="drive-details">
-                <h3>Google Drive</h3>
-                <p id="drive-status-desc">Google Drive & Workspace Integration</p>
+                <h3>Google Drive (Primary)</h3>
+                <p id="drive-status-desc">Active & Synced with Workspace API</p>
                 <div class="storage-bar">
                   <div class="fill" style="width: 45%;"></div>
                 </div>
                 <span class="usage-text">45 GB of 100 GB used</span>
-                <div>
-                  <button id="btn-connect-google" class="btn-connect-oauth">
-                    <i class="fa-brands fa-google"></i> Connect / Authorize Drive
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -317,52 +340,324 @@
             </div>
           </div>
 
-          <div id="drive-file-list" style="margin-top: 24px;"></div>
-        </div>
-      </section>
-
-      <!-- VIEW 6: Settings & Advice -->
-      <section id="view-settings" class="view-section">
-        <div class="settings-container">
-          <h2>Settings & Daily Performance</h2>
-
-          <div class="settings-grid">
-            <div class="settings-card">
-              <h3>Profile Picture URL</h3>
-              <div class="form-group">
-                <input type="text" id="cfg-profile-url" class="settings-input" placeholder="Paste image link URL...">
-                <button id="btn-save-profile-img" class="btn-primary">Update Profile Image</button>
+          <!-- File Explorer Table -->
+          <div class="drive-explorer-card">
+            <div class="explorer-toolbar">
+              <div class="explorer-breadcrumb" id="drive-breadcrumb">
+                <i class="fa-regular fa-folder-open"></i>
+                <span id="breadcrumb-current-folder">Root Directory</span>
+              </div>
+              <div id="drive-sync-status" class="sync-status-badge">
+                <i class="fa-solid fa-circle-check"></i> Synced
               </div>
             </div>
 
-            <div class="settings-card">
-              <h3>Daily Assistant Advice</h3>
-              <p class="advice-text">
-                "Nad, your focus index is high today. Allocate 2 hours to your final-year Mechanical Engineering
-                capstone project before reviewing KSP Rwanda operations."
-              </p>
+            <div id="drive-file-list" class="drive-file-list-container">
+              <!-- Dynamically rendered file table -->
             </div>
           </div>
         </div>
       </section>
 
-      <!-- VIEW 7: Privacy Policy -->
-      <section id="view-privacy" class="view-section">
-        <div class="legal-container">
-          <h2>Privacy Policy</h2>
-          <p>NAD Jarvis is a private personal assistant designed for Nadjibullah Uwabato.</p>
+      <!-- VIEW 5: Calendar & Schedule (Live Google Calendar + Weekly Timetable) -->
+      <section id="view-calendar" class="view-section">
+        <div class="feature-page-container">
+          <div class="calendar-subnav-tabs">
+            <button class="cal-tab-btn active" id="tab-btn-google-cal" data-subtab="events">
+              <i class="fa-regular fa-calendar-check"></i> Google Calendar Events
+            </button>
+            <button class="cal-tab-btn" id="tab-btn-weekly-cal" data-subtab="spreadsheet">
+              <i class="fa-solid fa-table-cells"></i> Weekly Master Timetable
+            </button>
+          </div>
+
+          <!-- SUBTAB 1: Google Calendar Live Events -->
+          <div id="calendar-subtab-events" class="cal-subtab-pane active">
+            <div class="section-header-wrap with-action">
+              <div>
+                <h2>Google Calendar Events</h2>
+                <p>Live schedule synced directly with your authorized Google Calendar.</p>
+              </div>
+              <button id="btn-open-new-event-modal" class="btn-primary">
+                <i class="fa-solid fa-plus"></i> New Event
+              </button>
+            </div>
+
+            <div id="calendar-events-container" class="calendar-events-grid">
+              <div class="empty-state-card">
+                <i class="fa-solid fa-circle-notch fa-spin empty-icon"></i>
+                <p>Fetching upcoming events...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUBTAB 2: Weekly Master Timetable (Saturday to Friday Spreadsheet) -->
+          <div id="calendar-subtab-spreadsheet" class="cal-subtab-pane">
+            <div class="schedule-header">
+              <h2>Weekly Master Schedule</h2>
+              <p>Week starts on Saturday and ends on Friday. Each row represents a 30-minute interval.</p>
+            </div>
+
+            <!-- Mobile Day Quick Filter Selector Pills -->
+            <div class="mobile-day-tabs" id="mobile-day-tabs">
+              <button class="mobile-day-pill active" data-day="all">All Days</button>
+              <button class="mobile-day-pill" data-day="sat">Sat</button>
+              <button class="mobile-day-pill" data-day="sun">Sun</button>
+              <button class="mobile-day-pill" data-day="mon">Mon</button>
+              <button class="mobile-day-pill" data-day="tue">Tue</button>
+              <button class="mobile-day-pill" data-day="wed">Wed</button>
+              <button class="mobile-day-pill" data-day="thu">Thu</button>
+              <button class="mobile-day-pill" data-day="fri">Fri</button>
+            </div>
+
+            <div class="spreadsheet-scroll-wrapper">
+              <table class="schedule-table">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Saturday</th>
+                    <th>Sunday</th>
+                    <th>Monday</th>
+                    <th>Tuesday</th>
+                    <th>Wednesday</th>
+                    <th>Thursday</th>
+                    <th>Friday</th>
+                  </tr>
+                </thead>
+                <tbody id="schedule-table-body">
+                  <!-- Dynamically generated rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </section>
 
-      <!-- VIEW 8: Terms of Service -->
+      <!-- VIEW 6: Tasks (Actionable To-Dos & Priority Manager) -->
+      <section id="view-tasks" class="view-section">
+        <div class="feature-page-container">
+          <div class="section-header-wrap">
+            <h2>Actionable Tasks & Reminders</h2>
+            <p>Track deadlines, project milestones, and personal to-dos.</p>
+          </div>
+
+          <!-- Add Task Card -->
+          <div class="add-task-card">
+            <form id="form-create-task" class="create-task-form">
+              <input type="text" id="task-title-input" class="task-main-input"
+                placeholder="Add a new task (e.g. Finish SAEV Capstone FEA simulation)..." required>
+              <div class="task-options-row">
+                <select id="task-priority-select" class="task-select">
+                  <option value="medium">Medium Priority</option>
+                  <option value="high">High Priority</option>
+                  <option value="low">Low Priority</option>
+                </select>
+                <input type="date" id="task-due-date" class="task-date-input">
+                <button type="submit" class="btn-primary">
+                  <i class="fa-solid fa-plus"></i> Add Task
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Tasks Filter Bar -->
+          <div class="tasks-filter-bar">
+            <button class="task-filter-btn active" data-filter="all">All Tasks</button>
+            <button class="task-filter-btn" data-filter="pending">Pending</button>
+            <button class="task-filter-btn" data-filter="completed">Completed</button>
+          </div>
+
+          <!-- Tasks List Container -->
+          <div id="tasks-list-container" class="tasks-list-container">
+            <div class="empty-state-card">
+              <i class="fa-solid fa-circle-notch fa-spin empty-icon"></i>
+              <p>Loading tasks...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 7: Voice / Audio AI (Sinusoidal Ocean Wave Canvas Visualizer) -->
+      <section id="view-audio-ai" class="view-section">
+        <div class="audio-ai-container">
+          <div class="audio-status-card">
+            <h2>Voice AI Intelligence</h2>
+            <p id="txt-mic-status">Listening for "Hello, Jarvis"...</p>
+          </div>
+
+          <!-- Ocean Wave Canvas -->
+          <div class="wave-visualizer-card">
+            <canvas id="audio-wave-canvas"></canvas>
+          </div>
+
+          <div class="audio-controls">
+            <button class="mic-toggle-btn" id="btn-toggle-mic-listening" title="Toggle Mic Listening">
+              <i class="fa-solid fa-microphone"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 8: Settings (Profile, Long-Term Memory, Knowledge Base) -->
+      <section id="view-settings" class="view-section">
+        <div class="feature-page-container">
+          <div class="section-header-wrap">
+            <h2>Settings & Intelligence System</h2>
+            <p>Configure personal profile, review assistant memory facts, and inspect indexed documents.</p>
+          </div>
+
+          <!-- Settings Subnav Tabs -->
+          <div class="settings-tabs-header">
+            <button class="settings-tab-btn active" data-tab="profile">
+              <i class="fa-solid fa-user-gear"></i> Profile & Persona
+            </button>
+            <button class="settings-tab-btn" data-tab="memory">
+              <i class="fa-solid fa-brain"></i> Memory
+            </button>
+            <button class="settings-tab-btn" data-tab="knowledge">
+              <i class="fa-solid fa-book-bookmark"></i> Knowledge Base
+            </button>
+          </div>
+
+          <!-- TAB 1: Profile & Persona -->
+          <div id="settings-tab-profile" class="settings-tab-content active">
+            <div class="settings-grid">
+              <div class="settings-card">
+                <h3>Profile Picture URL</h3>
+                <div class="form-group">
+                  <input type="text" id="cfg-profile-url" class="settings-input" placeholder="Paste image link URL...">
+                  <button id="btn-save-profile-img" class="btn-primary">Update Profile Image</button>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <h3>Daily Assistant Advice</h3>
+                <p class="advice-text">
+                  "Nad, your focus index is high today. Allocate 2 hours to your final-year Mechanical Engineering
+                  capstone project before reviewing KSP Rwanda operations."
+                </p>
+              </div>
+
+              <div class="settings-card full-width">
+                <h3>Owner Identity & Authorized Profile</h3>
+                <div class="profile-info-grid">
+                  <div class="info-row">
+                    <span class="info-label">Full Name:</span>
+                    <span class="info-val">Nadjibullah Uwabato (Nad)</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Email:</span>
+                    <span class="info-val">uwabatonadjibullah@gmail.com</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Role:</span>
+                    <span class="info-val">Owner, Engineer & Administrator</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">AI Engine:</span>
+                    <span class="info-val">NVIDIA NIM / DeepSeek Multi-Model Router</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: Long-Term Memory -->
+          <div id="settings-tab-memory" class="settings-tab-content">
+            <div class="settings-card full-width">
+              <div class="card-header-flex">
+                <div>
+                  <h3>Permanent Memory Store</h3>
+                  <p class="card-desc">Persistent facts, personal context, and instructions retained across conversations.</p>
+                </div>
+                <button id="btn-refresh-memory" class="btn-secondary-sm"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+              </div>
+
+              <div class="memory-search-bar">
+                <input type="text" id="input-search-memory" class="settings-input" placeholder="Filter memory facts...">
+              </div>
+
+              <div id="memory-items-list" class="memory-items-list">
+                <div class="empty-state-card"><i class="fa-solid fa-brain empty-icon"></i><p>Loading memory items...</p></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: Knowledge Base & Indexed Documents -->
+          <div id="settings-tab-knowledge" class="settings-tab-content">
+            <div class="settings-card full-width">
+              <div class="card-header-flex">
+                <div>
+                  <h3>Indexed Documents (RAG)</h3>
+                  <p class="card-desc">Documents and reports indexed into vector embeddings for semantic retrieval.</p>
+                </div>
+                <button id="btn-refresh-knowledge" class="btn-secondary-sm"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+              </div>
+
+              <div id="knowledge-docs-list" class="knowledge-docs-list">
+                <div class="empty-state-card"><i class="fa-solid fa-book-bookmark empty-icon"></i><p>Loading indexed documents...</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 9: Privacy Policy -->
+      <section id="view-privacy" class="view-section">
+        <div class="legal-container">
+          <h2>Privacy Policy</h2>
+          <p>NAD Jarvis is a private personal assistant designed exclusively for Nadjibullah Uwabato.</p>
+          <p>All data, conversations, memory embeddings, and cloud tokens are strictly secured and never shared.</p>
+        </div>
+      </section>
+
+      <!-- VIEW 10: Terms of Service -->
       <section id="view-terms" class="view-section">
         <div class="legal-container">
           <h2>Terms of Service</h2>
           <p>Strictly private for single-user authorization.</p>
+          <p>Unauthorized access is strictly forbidden.</p>
         </div>
       </section>
 
     </main>
+  </div>
+
+  <!-- Create Calendar Event Modal -->
+  <div id="modal-cal-event" class="auth-modal-overlay" style="display: none;">
+    <div class="auth-modal-card modal-medium">
+      <div style="font-size: 2rem; color: #d4af37; margin-bottom: 8px;">
+        <i class="fa-solid fa-calendar-plus"></i>
+      </div>
+      <h3>Add Calendar Event</h3>
+      <p>Schedule an event directly into your connected Google Calendar.</p>
+
+      <form id="form-create-cal-event" style="display: flex; flex-direction: column; gap: 12px; text-align: left; margin-top: 14px;">
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted);">Event Title</label>
+          <input type="text" id="cal-event-title" required class="settings-input" placeholder="e.g. SAEV Capstone Team Review" style="width: 100%; margin-top: 4px;">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label style="font-size: 0.8rem; color: var(--text-muted);">Start Time</label>
+            <input type="datetime-local" id="cal-event-start" required class="settings-input" style="width: 100%; margin-top: 4px;">
+          </div>
+          <div>
+            <label style="font-size: 0.8rem; color: var(--text-muted);">End Time</label>
+            <input type="datetime-local" id="cal-event-end" required class="settings-input" style="width: 100%; margin-top: 4px;">
+          </div>
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted);">Description / Notes</label>
+          <input type="text" id="cal-event-desc" class="settings-input" placeholder="Optional details..." style="width: 100%; margin-top: 4px;">
+        </div>
+        <div id="cal-event-error" style="color: #ef4444; font-size: 0.82rem; display: none;"></div>
+        <div style="display: flex; gap: 10px; margin-top: 8px;">
+          <button type="submit" class="btn-primary" style="flex: 1;">Create Event</button>
+          <button type="button" id="btn-close-cal-modal" class="btn-secondary" style="flex: 1;">Cancel</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Owner Authentication Modal (Single User Supabase Auth) -->
@@ -382,17 +677,26 @@
         </div>
         <div>
           <label style="font-size: 0.8rem; color: var(--text-muted);">Master Password</label>
-          <input type="password" id="login-password" placeholder="Enter password..." required class="settings-input"
-            style="width: 100%; margin-top: 4px;">
+          <div style="position: relative; display: flex; align-items: center;">
+            <input type="password" id="login-password" placeholder="Enter password..." required class="settings-input"
+              style="width: 100%; margin-top: 4px; padding-right: 40px;">
+            <button type="button" id="btn-modal-toggle-pwd" style="position: absolute; right: 10px; background: transparent; border: none; color: var(--text-muted); cursor: pointer;">
+              <i class="fa-regular fa-eye" id="icon-modal-pwd-eye"></i>
+            </button>
+          </div>
         </div>
         <div id="login-error-msg" style="color: #ef4444; font-size: 0.82rem; display: none;"></div>
-        <button type="submit" class="btn-primary" style="margin-top: 6px;">Sign In to NAD JARVIS</button>
-        <button type="button" id="btn-close-auth-modal" class="btn-connect-oauth"
-          style="margin-top: 2px; justify-content: center;">Continue in Offline Mode</button>
+        <button type="submit" id="btn-modal-login-submit" class="btn-primary" style="margin-top: 6px;">Sign In to NAD JARVIS</button>
+        <div style="text-align: center; margin-top: 6px;">
+          <a href="login.html" style="font-size: 0.82rem; color: #d4af37; text-decoration: none;">Go to Full Login Page &rarr;</a>
+        </div>
       </form>
     </div>
   </div>
 
+  <!-- Scripts -->
+  <script src="services/api.js"></script>
+  <script src="services/google.js"></script>
   <script src="app.js"></script>
 </body>
 

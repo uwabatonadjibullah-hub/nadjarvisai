@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Log In — NAD Jarvis AI</title>
+  <meta name="description" content="Secure Owner Authentication for NAD JARVIS Private Personal Assistant.">
+
+  <!-- Icons & Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Three.js for Particle Field -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #06080c;
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #login-bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .login-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 440px;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    .login-card {
+      background: rgba(14, 18, 27, 0.75);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      border-radius: 24px;
+      padding: 40px 32px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 35px rgba(212, 175, 55, 0.08);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.12), transparent 60%);
+      pointer-events: none;
+    }
+
+    .brand-logo-wrap {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 16px auto;
+      border-radius: 50%;
+      padding: 4px;
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.8), rgba(212, 175, 55, 0.1));
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
+    }
+
+    .brand-logo-wrap img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .login-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 6px 0;
+      background: linear-gradient(135deg, #ffffff 30%, #d4af37 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .login-subtitle {
+      font-size: 0.88rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin: 0 0 28px 0;
+      line-height: 1.4;
+    }
+
+    .form-group-login {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+      margin-bottom: 18px;
+    }
+
+    .form-label-login {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 6px;
+    }
+
+    .input-field-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-field-wrap i.prefix-icon {
+      position: absolute;
+      left: 14px;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.95rem;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 13px 42px 13px 40px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 0.92rem;
+      outline: none;
+      transition: all 0.25s ease;
+      font-family: inherit;
+    }
+
+    .login-input:focus {
+      border-color: #d4af37;
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
+    }
+
+    .login-input[readonly] {
+      opacity: 0.85;
+      cursor: not-allowed;
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-toggle-pwd {
+      position: absolute;
+      right: 12px;
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.45);
+      cursor: pointer;
+      font-size: 0.95rem;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+
+    .btn-toggle-pwd:hover {
+      color: #d4af37;
+    }
+
+    .login-error {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      margin-bottom: 16px;
+      display: none;
+      text-align: left;
+    }
+
+    .btn-login-submit {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #d4af37 0%, #aa820a 100%);
+      color: #06080c;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(212, 175, 55, 0.35);
+      margin-top: 8px;
+    }
+
+    .btn-login-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 26px rgba(212, 175, 55, 0.5);
+    }
+
+    .btn-login-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .login-footer-links {
+      margin-top: 24px;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .login-footer-links a {
+      color: #d4af37;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    .login-footer-links a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="login-bg-canvas"></div>
+
+  <div class="login-container">
+    <div class="login-card">
+      <div class="brand-logo-wrap">
+        <img src="icon-logo.jpg" alt="NAD JARVIS">
+      </div>
+      <h1 class="login-title">NAD JARVIS</h1>
+      <p class="login-subtitle">Owner Authentication & Secure Gateway</p>
+
+      <div id="login-error-msg" class="login-error"></div>
+
+      <form id="login-form">
+        <div class="form-group-login">
+          <label class="form-label-login" for="owner-email">Authorized Owner</label>
+          <div class="input-field-wrap">
+            <i class="fa-solid fa-user-shield prefix-icon"></i>
+            <input type="email" id="owner-email" class="login-input" value="uwabatonadjibullah@gmail.com" readonly required>
+          </div>
+        </div>
+
+        <div class="form-group-login">
+          <label class="form-label-login" for="owner-password">Master Password</label>
+          <div class="input-field-wrap">
+            <i class="fa-solid fa-lock prefix-icon"></i>
+            <input type="password" id="owner-password" class="login-input" placeholder="Enter master password..." required autofocus>
+            <button type="button" class="btn-toggle-pwd" id="btn-toggle-pwd" title="Toggle password visibility">
+              <i class="fa-regular fa-eye" id="icon-pwd-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="btn-submit" class="btn-login-submit">
+          <span>Sign In to NAD JARVIS</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+
+      <div class="login-footer-links">
+        <a href="/"><i class="fa-solid fa-house"></i> Return to Landing Page</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="services/api.js"></script>
+  <script>
+    // 1. Interactive Three.js particle field background
+    (function initBackground() {
+      const container = document.getElementById('login-bg-canvas');
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+      camera.position.z = 400;
+
+      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
+
+      const particleCount = 2000;
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(particleCount * 3);
+      const colors = new Float32Array(particleCount * 3);
+
+      const color1 = new THREE.Color('#d4af37');
+      const color2 = new THREE.Color('#4338ca');
+
+      for (let i = 0; i < particleCount; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 800;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 800;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 800;
+
+        const mixed = color1.clone().lerp(color2, Math.random());
+        colors[i * 3] = mixed.r;
+        colors[i * 3 + 1] = mixed.g;
+        colors[i * 3 + 2] = mixed.b;
+      }
+
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+      const material = new THREE.PointsMaterial({
+        size: 2.2,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.65,
+        blending: THREE.AdditiveBlending
+      });
+
+      const particleSystem = new THREE.Points(geometry, material);
+      scene.add(particleSystem);
+
+      function animate() {
+        requestAnimationFrame(animate);
+        particleSystem.rotation.y += 0.0008;
+        particleSystem.rotation.x += 0.0004;
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    })();
+
+    // 2. Auth Flow & Password toggle
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Toggle password visibility
+      const btnToggle = document.getElementById('btn-toggle-pwd');
+      const pwdInput = document.getElementById('owner-password');
+      const eyeIcon = document.getElementById('icon-pwd-eye');
+
+      btnToggle.addEventListener('click', () => {
+        const isPwd = pwdInput.type === 'password';
+        pwdInput.type = isPwd ? 'text' : 'password';
+        eyeIcon.className = isPwd ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+      });
+
+      // Check if user is already authenticated
+      try {
+        const session = await window.JarvisAPI.checkSession();
+        if (session && session.authenticated) {
+          window.location.href = '/';
+          return;
+        }
+      } catch (e) {
+        // Not authenticated, stay on page
+      }
+
+      const form = document.getElementById('login-form');
+      const errorMsg = document.getElementById('login-error-msg');
+      const submitBtn = document.getElementById('btn-submit');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorMsg.style.display = 'none';
+        errorMsg.textContent = '';
+
+        const email = document.getElementById('owner-email').value.trim();
+        const password = pwdInput.value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...';
+
+        try {
+          await window.JarvisAPI.login(email, password);
+          submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> Authenticated!';
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 400);
+        } catch (err) {
+          errorMsg.textContent = err.message || 'Authentication failed. Please verify credentials.';
+          errorMsg.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>Sign In to NAD JARVIS</span> <i class="fa-solid fa-arrow-right"></i>';
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

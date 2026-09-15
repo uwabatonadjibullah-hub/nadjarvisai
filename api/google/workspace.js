@@ -27,6 +27,7 @@ const { checkRateLimit } = require('../../lib/rateLimit');
 const { listDriveFiles, readDriveFile, uploadToDrive } = require('../../lib/google/drive');
 const { listCalendarEvents, createCalendarEvent } = require('../../lib/google/calendar');
 const { readGmailMessage, searchGmail } = require('../../lib/google/gmail');
+const { listConnectedAccounts } = require('../../lib/google/oauth');
 
 module.exports = async function handler(req, res) {
   // Rate limit all workspace operations
@@ -44,6 +45,7 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({
       error: 'Missing ?action parameter.',
       availableActions: [
+        'accounts.list',
         'drive.list', 'drive.read', 'drive.upload',
         'calendar.list', 'calendar.create',
         'gmail.read', 'gmail.search'
@@ -55,6 +57,12 @@ module.exports = async function handler(req, res) {
     let result;
 
     switch (action) {
+      // ── Accounts ─────────────────────────────────────────────────────────────
+      case 'accounts.list':
+        if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+        result = await listConnectedAccounts({ auth, req });
+        break;
+
       // ── Drive ────────────────────────────────────────────────────────────────
       case 'drive.list':
         if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
@@ -105,6 +113,7 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({
           error: `Unknown action "${action}".`,
           availableActions: [
+            'accounts.list',
             'drive.list', 'drive.read', 'drive.upload',
             'calendar.list', 'calendar.create',
             'gmail.read', 'gmail.search'

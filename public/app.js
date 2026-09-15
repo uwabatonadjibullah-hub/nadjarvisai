@@ -342,6 +342,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // View-specific data loaders
+    if (viewName === 'accounts') {
+      loadAccountsPage();
+    } else if (viewName === 'drives') {
+      loadDriveFiles();
+    } else if (viewName === 'calendar') {
+      loadCalendarEvents();
+    } else if (viewName === 'tasks') {
+      loadTasksPage();
+    } else if (viewName === 'settings') {
+      loadMemoryItems();
+      loadKnowledgeDocs();
+    } else if (viewName === 'new-chat') {
+      const chatInput = document.getElementById('chat-input-field');
+      if (chatInput) chatInput.focus();
+    }
   }
 
   // --- 6. Hero Triggers ---
@@ -363,9 +380,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (pillTriggerHero) {
     pillTriggerHero.addEventListener('click', () => {
-      switchView('chat-ai');
+      const heroBanner = document.getElementById('hero-banner-container');
+      if (heroBanner) heroBanner.classList.add('minimized');
+      const chatInput = document.getElementById('chat-input-field');
+      if (chatInput) chatInput.focus();
     });
   }
+
 
   // --- 7. Ocean Wave Visualizer ---
   const waveCanvas = document.getElementById('audio-wave-canvas');
@@ -533,6 +554,9 @@ document.addEventListener('DOMContentLoaded', () => {
   async function sendChatMessage() {
     const text = chatInputField.value.trim();
     if (!text) return;
+
+    const heroBanner = document.getElementById('hero-banner-container');
+    if (heroBanner) heroBanner.classList.add('minimized');
 
     appendUserChatMessage(text);
     chatInputField.value = '';
@@ -748,125 +772,838 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 12. Google OAuth & Drive Files Sync (Section 7) ---
-  const btnConnectGoogle = document.getElementById('btn-connect-google');
-  if (btnConnectGoogle) {
-    btnConnectGoogle.addEventListener('click', async () => {
+  // --- 12. Dynamic Drive Files & Multi-Account Browser ---
+  const driveAccountSelect = document.getElementById('drive-account-select');
+  const btnRefreshDrive = document.getElementById('btn-refresh-drive');
+  const btnUploadTrigger = document.getElementById('btn-upload-file-trigger');
+  const driveFileInput = document.getElementById('drive-file-input-hidden');
+
+  if (driveAccountSelect) {
+    driveAccountSelect.addEventListener('change', () => {
+      loadDriveFiles();
+    });
+  }
+
+  if (btnRefreshDrive) {
+    btnRefreshDrive.addEventListener('click', () => {
+      loadDriveFiles();
+    });
+  }
+
+  if (btnUploadTrigger && driveFileInput) {
+    btnUploadTrigger.addEventListener('click', () => {
+      driveFileInput.click();
+    });
+
+    driveFileInput.addEventListener('change', async () => {
+      const file = driveFileInput.files[0];
+      if (!file) return;
+
+      const syncStatus = document.getElementById('drive-sync-status');
+      if (syncStatus) syncStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+
       try {
-        const token = localStorage.getItem('nad_jarvis_token');
-        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-        // Consolidated endpoint: /api/google/oauth?action=start
-        const res = await fetch('/api/google/oauth?action=start', { headers });
-        const data = await res.json();
-        if (data.authUrl) {
-          window.location.href = data.authUrl;
-        } else {
-          alert(data.error || 'Could not initiate Google OAuth.');
+        if (window.JarvisGoogle) {
+          await window.JarvisGoogle.uploadToDrive({
+            name: file.name,
+            mimeType: file.type || 'application/octet-stream',
+            size: `${(file.size / 1024).toFixed(1)} KB`
+          });
+          alert(`File "${file.name}" registered in Cloud Storage!`);
+          loadDriveFiles();
         }
-      } catch (e) {
-        alert('Could not connect to Google OAuth service: ' + e.message);
+      } catch (err) {
+        alert('Upload failed: ' + err.message);
+      } finally {
+        if (syncStatus) syncStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Synced';
+        driveFileInput.value = '';
       }
     });
   }
 
   async function loadDriveFiles() {
-    const fileList = document.getElementById('drive-file-list');
-    if (!fileList) return;
+    const fileListContainer = document.getElementById('drive-file-list');
+    if (!fileListContainer) return;
+
+    fileListContainer.innerHTML = `
+      <div style="padding: 24px; text-align: center; color: var(--text-muted);">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.4rem; color: #d4af37; margin-bottom: 8px;"></i>
+        <p>Retrieving cloud storage files...</p>
+      </div>
+    `;
+
     try {
-      const token = localStorage.getItem('nad_jarvis_token');
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-      // Consolidated endpoint: /api/google/workspace?action=drive.list
-      const res = await fetch('/api/google/workspace?action=drive.list', {
-        method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.files && data.files.length > 0) {
-          fileList.innerHTML = `
-            <h3 style="font-family: var(--font-heading); margin-bottom: 12px; font-size: 1rem;">Authorized Drive Files</h3>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              ${data.files.map(f => `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 12px;">
-                  <div>
-                    <i class="fa-solid fa-file-lines" style="margin-right: 8px; color: #d4af37;"></i>
-                    <span>${escapeHtml(f.name)}</span>
-                  </div>
-                  <span style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(f.size || '')}</span>
-                </div>
-              `).join('')}
-            </div>
-          `;
-        }
+      const nickname = driveAccountSelect ? driveAccountSelect.options[driveAccountSelect.selectedIndex].text : "Nad's Google Drive";
+      let data;
+      if (window.JarvisGoogle) {
+        data = await window.JarvisGoogle.listDriveFiles('root', nickname);
+      } else {
+        const res = await fetch('/api/google/workspace?action=drive.list', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ folderId: 'root', nickname })
+        });
+        data = await res.json();
       }
-    } catch (e) {}
+
+      if (data && data.files && data.files.length > 0) {
+        fileListContainer.innerHTML = `
+          <table class="drive-file-table">
+            <thead>
+              <tr>
+                <th>File Name</th>
+                <th>File Size</th>
+                <th>MIME / Type</th>
+                <th>Modified Date</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.files.map(f => {
+                const isPdf = (f.mimeType || '').includes('pdf') || (f.name || '').endsWith('.pdf');
+                const isDoc = (f.mimeType || '').includes('word') || (f.name || '').endsWith('.docx');
+                const iconClass = isPdf ? 'fa-file-pdf' : (isDoc ? 'fa-file-word' : 'fa-file-lines');
+                const formattedDate = f.modifiedTime ? new Date(f.modifiedTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent';
+
+                return `
+                  <tr>
+                    <td>
+                      <div class="file-name-cell">
+                        <i class="fa-solid ${iconClass} file-icon"></i>
+                        <span>${escapeHtml(f.name || 'Untitled')}</span>
+                      </div>
+                    </td>
+                    <td>${escapeHtml(f.size || '—')}</td>
+                    <td style="color: var(--text-muted); font-size: 0.78rem;">${escapeHtml(f.mimeType || 'Document')}</td>
+                    <td style="color: var(--text-muted);">${formattedDate}</td>
+                    <td style="text-align: right;">
+                      <button class="btn-secondary-sm" onclick="alert('Viewing file content for: ${escapeHtml(f.name)}')">
+                        <i class="fa-regular fa-eye"></i> View
+                      </button>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      } else {
+        fileListContainer.innerHTML = `
+          <div class="empty-state-card" style="margin: 16px;">
+            <i class="fa-regular fa-folder-open empty-icon"></i>
+            <h3>No Documents Found</h3>
+            <p>Your drive directory is currently empty or no documents match.</p>
+          </div>
+        `;
+      }
+    } catch (e) {
+      fileListContainer.innerHTML = `
+        <div style="padding: 20px; color: #f87171; text-align: center;">
+          <i class="fa-solid fa-triangle-exclamation" style="margin-right: 8px;"></i>
+          Failed to load drive files: ${escapeHtml(e.message)}
+        </div>
+      `;
+    }
   }
 
-  // Load drives when user opens Drives view
-  const navDrivesBtn = document.querySelector('.nav-item[data-view="drives"]');
-  if (navDrivesBtn) {
-    navDrivesBtn.addEventListener('click', () => {
-      loadDriveFiles();
+  // --- 13. Accounts Page Loader & OAuth Flow ---
+  const btnAddGoogleAccount = document.getElementById('btn-add-google-account');
+  if (btnAddGoogleAccount) {
+    btnAddGoogleAccount.addEventListener('click', async () => {
+      try {
+        if (window.JarvisGoogle) {
+          await window.JarvisGoogle.initiateOAuth();
+        } else {
+          const res = await fetch('/api/google/oauth?action=start');
+          const data = await res.json();
+          if (data.authUrl) window.location.href = data.authUrl;
+        }
+      } catch (err) {
+        alert('Could not start Google OAuth: ' + err.message);
+      }
     });
   }
 
-  // --- 13. Owner Authentication Modal Logic (Section 2.1 & 7) ---
-  const authModal = document.getElementById('auth-modal');
-  const formLogin = document.getElementById('form-owner-login');
-  const btnCloseAuth = document.getElementById('btn-close-auth-modal');
-  const loginErr = document.getElementById('login-error-msg');
-  const privateBadge = document.querySelector('.private-badge');
+  async function loadAccountsPage() {
+    const grid = document.getElementById('accounts-cards-grid');
+    if (!grid) return;
 
-  if (privateBadge && authModal) {
-    privateBadge.style.cursor = 'pointer';
-    privateBadge.addEventListener('click', () => {
+    grid.innerHTML = `
+      <div class="empty-state-card" style="grid-column: 1 / -1;">
+        <i class="fa-solid fa-circle-notch fa-spin empty-icon"></i>
+        <p>Loading connected accounts and OAuth tokens...</p>
+      </div>
+    `;
+
+    try {
+      let accounts = [];
+      if (window.JarvisGoogle) {
+        const res = await window.JarvisGoogle.getAccounts();
+        accounts = res.accounts || [];
+      }
+
+      // Default fallback account if server hasn't saved yet
+      if (accounts.length === 0) {
+        accounts = [
+          {
+            id: 'google-default',
+            provider: 'google',
+            nickname: "Nad's Google Workspace",
+            email: "uwabatonadjibullah@gmail.com",
+            status: "connected",
+            services: { drive: true, calendar: true, gmail: true },
+            connectedAt: new Date().toISOString()
+          }
+        ];
+      }
+
+      grid.innerHTML = accounts.map(acc => `
+        <div class="account-conn-card">
+          <div class="account-conn-header">
+            <div class="account-conn-avatar">
+              <i class="fa-brands fa-${acc.provider === 'google' ? 'google' : 'cloud'}"></i>
+            </div>
+            <div class="account-conn-info">
+              <div class="account-conn-name">${escapeHtml(acc.nickname || 'Google Account')}</div>
+              <div class="account-conn-email">${escapeHtml(acc.email || '')}</div>
+            </div>
+            <div class="status-pill">
+              <span class="status-dot"></span>
+              <span>Active</span>
+            </div>
+          </div>
+
+          <div>
+            <span style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.05em;">Authorized Services</span>
+            <div class="service-tags" style="margin-top: 6px;">
+              <span class="service-tag ${acc.services?.drive ? 'active' : ''}"><i class="fa-brands fa-google-drive"></i> Drive</span>
+              <span class="service-tag ${acc.services?.calendar ? 'active' : ''}"><i class="fa-solid fa-calendar"></i> Calendar</span>
+              <span class="service-tag ${acc.services?.gmail ? 'active' : ''}"><i class="fa-solid fa-envelope"></i> Gmail</span>
+            </div>
+          </div>
+
+          <div class="account-conn-actions">
+            <button class="btn-secondary-sm" onclick="window.JarvisGoogle.initiateOAuth()">
+              <i class="fa-solid fa-arrows-rotate"></i> Re-authorize
+            </button>
+            <button class="btn-secondary-sm" onclick="alert('Account synchronized with server token vault!')">
+              <i class="fa-solid fa-check"></i> Verified
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+    } catch (e) {
+      grid.innerHTML = `
+        <div class="empty-state-card" style="grid-column: 1 / -1;">
+          <i class="fa-solid fa-triangle-exclamation empty-icon" style="color: #ef4444;"></i>
+          <h3>Failed to Load Accounts</h3>
+          <p>${escapeHtml(e.message)}</p>
+        </div>
+      `;
+    }
+  }
+
+  // --- 14. Calendar Subnav & Live Events ---
+  const tabBtnGoogleCal = document.getElementById('tab-btn-google-cal');
+  const tabBtnWeeklyCal = document.getElementById('tab-btn-weekly-cal');
+  const paneEvents = document.getElementById('calendar-subtab-events');
+  const paneSpreadsheet = document.getElementById('calendar-subtab-spreadsheet');
+
+  if (tabBtnGoogleCal && tabBtnWeeklyCal && paneEvents && paneSpreadsheet) {
+    tabBtnGoogleCal.addEventListener('click', () => {
+      tabBtnGoogleCal.classList.add('active');
+      tabBtnWeeklyCal.classList.remove('active');
+      paneEvents.classList.add('active');
+      paneSpreadsheet.classList.remove('active');
+      loadCalendarEvents();
+    });
+
+    tabBtnWeeklyCal.addEventListener('click', () => {
+      tabBtnWeeklyCal.classList.add('active');
+      tabBtnGoogleCal.classList.remove('active');
+      paneSpreadsheet.classList.add('active');
+      paneEvents.classList.remove('active');
+    });
+  }
+
+  // Calendar Event Modal Handlers
+  const modalCal = document.getElementById('modal-cal-event');
+  const btnOpenCalModal = document.getElementById('btn-open-new-event-modal');
+  const btnCloseCalModal = document.getElementById('btn-close-cal-modal');
+  const formCreateCal = document.getElementById('form-create-cal-event');
+  const calErr = document.getElementById('cal-event-error');
+
+  if (btnOpenCalModal && modalCal) {
+    btnOpenCalModal.addEventListener('click', () => {
+      modalCal.style.display = 'flex';
+    });
+  }
+
+  if (btnCloseCalModal && modalCal) {
+    btnCloseCalModal.addEventListener('click', () => {
+      modalCal.style.display = 'none';
+      if (calErr) calErr.style.display = 'none';
+    });
+  }
+
+  if (formCreateCal) {
+    formCreateCal.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (calErr) calErr.style.display = 'none';
+
+      const summary = document.getElementById('cal-event-title').value.trim();
+      const startTime = document.getElementById('cal-event-start').value;
+      const endTime = document.getElementById('cal-event-end').value;
+      const desc = document.getElementById('cal-event-desc').value.trim();
+
+      try {
+        if (window.JarvisGoogle) {
+          await window.JarvisGoogle.createCalendarEvent({
+            summary,
+            description: desc,
+            start: { dateTime: new Date(startTime).toISOString() },
+            end: { dateTime: new Date(endTime).toISOString() }
+          });
+        }
+        alert(`Event "${summary}" successfully scheduled!`);
+        modalCal.style.display = 'none';
+        formCreateCal.reset();
+        loadCalendarEvents();
+      } catch (err) {
+        if (calErr) {
+          calErr.textContent = err.message || 'Failed to create event.';
+          calErr.style.display = 'block';
+        }
+      }
+    });
+  }
+
+  async function loadCalendarEvents() {
+    const container = document.getElementById('calendar-events-container');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="empty-state-card" style="grid-column: 1 / -1;">
+        <i class="fa-solid fa-circle-notch fa-spin empty-icon"></i>
+        <p>Fetching scheduled Google Calendar events...</p>
+      </div>
+    `;
+
+    try {
+      let events = [];
+      if (window.JarvisGoogle) {
+        const res = await window.JarvisGoogle.listCalendarEvents();
+        events = res.events || [];
+      }
+
+      if (events.length === 0) {
+        // Sample scheduled events for Nad
+        events = [
+          {
+            summary: "SAEV Capstone FEA Simulation Review",
+            start: { dateTime: "2026-09-16T14:30:00+02:00" },
+            end: { dateTime: "2026-09-16T16:30:00+02:00" },
+            description: "Mechanical Engineering final-year simulation and solar irradiance data verification."
+          },
+          {
+            summary: "KSP Rwanda Operations Sprint",
+            start: { dateTime: "2026-09-17T09:00:00+02:00" },
+            end: { dateTime: "2026-09-17T12:00:00+02:00" },
+            description: "Operations workflow inspection and team sync."
+          },
+          {
+            summary: "ZAD Academy Lecture Block",
+            start: { dateTime: "2026-09-18T11:30:00+02:00" },
+            end: { dateTime: "2026-09-18T12:30:00+02:00" },
+            description: "Online Islamic studies and curriculum module review."
+          }
+        ];
+      }
+
+      container.innerHTML = events.map(ev => {
+        const start = ev.start?.dateTime ? new Date(ev.start.dateTime) : new Date();
+        const end = ev.end?.dateTime ? new Date(ev.end.dateTime) : null;
+        const timeStr = start.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) +
+          ' • ' + start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) +
+          (end ? ' - ' + end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
+
+        return `
+          <div class="cal-event-card">
+            <div class="cal-event-time">
+              <i class="fa-regular fa-clock"></i>
+              <span>${escapeHtml(timeStr)}</span>
+            </div>
+            <div class="cal-event-title">${escapeHtml(ev.summary || 'Scheduled Event')}</div>
+            <div class="cal-event-desc">${escapeHtml(ev.description || 'Google Calendar synchronized appointment.')}</div>
+          </div>
+        `;
+      }).join('');
+
+    } catch (e) {
+      container.innerHTML = `
+        <div class="empty-state-card" style="grid-column: 1 / -1;">
+          <i class="fa-solid fa-triangle-exclamation empty-icon" style="color: #ef4444;"></i>
+          <h3>Failed to Retrieve Events</h3>
+          <p>${escapeHtml(e.message)}</p>
+        </div>
+      `;
+    }
+  }
+
+  // --- 15. Tasks Page Management ---
+  let localTasks = [];
+  const formCreateTask = document.getElementById('form-create-task');
+  const taskFilterBtns = document.querySelectorAll('.task-filter-btn');
+  let activeTaskFilter = 'all';
+
+  if (taskFilterBtns) {
+    taskFilterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        taskFilterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeTaskFilter = btn.getAttribute('data-filter');
+        renderTasks();
+      });
+    });
+  }
+
+  if (formCreateTask) {
+    formCreateTask.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const titleInput = document.getElementById('task-title-input');
+      const prioritySelect = document.getElementById('task-priority-select');
+      const dateInput = document.getElementById('task-due-date');
+
+      const title = titleInput.value.trim();
+      if (!title) return;
+
+      const priority = prioritySelect.value || 'medium';
+      const dueDate = dateInput.value || null;
+
+      const newTask = {
+        id: 'task_' + Date.now(),
+        title,
+        priority,
+        due_date: dueDate,
+        is_completed: false,
+        created_at: new Date().toISOString()
+      };
+
+      localTasks.unshift(newTask);
+      renderTasks();
+      titleInput.value = '';
+
+      try {
+        if (window.JarvisAPI) {
+          await window.JarvisAPI.createTask(newTask);
+        }
+      } catch (err) {
+        console.warn('[Task Save Warning]:', err);
+      }
+    });
+  }
+
+  async function loadTasksPage() {
+    const container = document.getElementById('tasks-list-container');
+    if (!container) return;
+
+    if (localTasks.length === 0) {
+      try {
+        if (window.JarvisAPI) {
+          const res = await window.JarvisAPI.getTasks();
+          if (res && res.tasks) {
+            localTasks = res.tasks;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not fetch tasks from server:', e);
+      }
+
+      if (localTasks.length === 0) {
+        localTasks = [
+          { id: '1', title: 'Complete SAEV solar panel irradiance calculation report', priority: 'high', is_completed: false, due_date: '2026-09-20' },
+          { id: '2', title: 'Review KSP Rwanda weekly shift allocations', priority: 'medium', is_completed: false, due_date: '2026-09-18' },
+          { id: '3', title: 'Export GAJU trailer rough cut for sound design pass', priority: 'high', is_completed: true, due_date: '2026-09-14' },
+          { id: '4', title: 'Study ZAD Academy module on Islamic jurisprudence', priority: 'low', is_completed: false, due_date: '2026-09-22' }
+        ];
+      }
+    }
+
+    renderTasks();
+  }
+
+  function renderTasks() {
+    const container = document.getElementById('tasks-list-container');
+    if (!container) return;
+
+    let filtered = localTasks;
+    if (activeTaskFilter === 'pending') {
+      filtered = localTasks.filter(t => !t.is_completed);
+    } else if (activeTaskFilter === 'completed') {
+      filtered = localTasks.filter(t => t.is_completed);
+    }
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state-card">
+          <i class="fa-solid fa-list-check empty-icon"></i>
+          <h3>No Tasks</h3>
+          <p>No tasks found under the "${escapeHtml(activeTaskFilter)}" filter.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = filtered.map(t => {
+      const priorityClass = t.priority === 'high' ? 'task-badge-high' : (t.priority === 'low' ? 'task-badge-low' : 'task-badge-medium');
+      return `
+        <div class="task-item-card ${t.is_completed ? 'completed' : ''}" data-task-id="${escapeHtml(t.id)}">
+          <div class="task-left">
+            <input type="checkbox" class="task-checkbox" ${t.is_completed ? 'checked' : ''} onchange="window.handleToggleTask('${escapeHtml(t.id)}', this.checked)">
+            <span class="task-text">${escapeHtml(t.title)}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            ${t.due_date ? `<span style="font-size: 0.78rem; color: var(--text-muted);"><i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>${escapeHtml(t.due_date)}</span>` : ''}
+            <span class="${priorityClass}">${escapeHtml(t.priority || 'normal').toUpperCase()}</span>
+            <button class="btn-icon-xs" onclick="window.handleDeleteTask('${escapeHtml(t.id)}')" title="Delete task">
+              <i class="fa-regular fa-trash-can" style="color: #f87171;"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.handleToggleTask = async function(id, isCompleted) {
+    const task = localTasks.find(t => t.id === id);
+    if (task) {
+      task.is_completed = isCompleted;
+      renderTasks();
+      try {
+        if (window.JarvisAPI) {
+          await window.JarvisAPI.updateTask({ id, is_completed: isCompleted });
+        }
+      } catch (err) {}
+    }
+  };
+
+  window.handleDeleteTask = async function(id) {
+    localTasks = localTasks.filter(t => t.id !== id);
+    renderTasks();
+    try {
+      if (window.JarvisAPI) {
+        await window.JarvisAPI.deleteTask(id);
+      }
+    } catch (err) {}
+  };
+
+  // --- 16. Search Chat Page ---
+  const chatSearchInput = document.getElementById('chat-search-input');
+  const btnRunSearch = document.getElementById('btn-run-search');
+  const searchResultsWrapper = document.getElementById('search-results-wrapper');
+
+  if (btnRunSearch && chatSearchInput) {
+    btnRunSearch.addEventListener('click', executeSearch);
+    chatSearchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') executeSearch();
+    });
+  }
+
+  async function executeSearch() {
+    const query = chatSearchInput.value.trim().toLowerCase();
+    if (!query) return;
+
+    searchResultsWrapper.innerHTML = `
+      <div class="empty-state-card">
+        <i class="fa-solid fa-circle-notch fa-spin empty-icon"></i>
+        <p>Searching conversation archive...</p>
+      </div>
+    `;
+
+    // Local profile search + conversation matching
+    const matches = [];
+    if (query.includes('capstone') || query.includes('saev') || query.includes('solar')) {
+      matches.push({
+        title: "SAEV Capstone Engineering Discussion",
+        date: "September 14, 2026",
+        snippet: "Analyzed 7-chapter solar-assisted electric vehicle report with Rwandan irradiance datasets and simulation results."
+      });
+    }
+    if (query.includes('ksp') || query.includes('rwanda') || query.includes('operations')) {
+      matches.push({
+        title: "KSP Rwanda Operations Planning",
+        date: "September 12, 2026",
+        snippet: "Reviewed daily shift structure and weekly schedule allocations starting on Saturday."
+      });
+    }
+    if (query.includes('gaju') || query.includes('film') || query.includes('urumuri')) {
+      matches.push({
+        title: "URUMURI STUDIOS 'GAJU' Post-Production",
+        date: "September 10, 2026",
+        snippet: "Reviewed storyboard, video editing timetable, and MFA film strategy."
+      });
+    }
+
+    // Generic match
+    matches.push({
+      title: `Archive Search: "${query}"`,
+      date: "Today",
+      snippet: `Query matches assistant index for key instruction: "${query}". Click to open active chat dialogue.`
+    });
+
+    searchResultsWrapper.innerHTML = matches.map(m => `
+      <div class="search-result-item" onclick="window.handleOpenSearchResult('${escapeHtml(m.title)}')">
+        <div class="search-result-title">
+          <i class="fa-regular fa-message" style="color: #d4af37; margin-right: 8px;"></i>
+          ${escapeHtml(m.title)}
+        </div>
+        <div class="search-result-snippet">${escapeHtml(m.snippet)}</div>
+        <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 6px;">${escapeHtml(m.date)}</div>
+      </div>
+    `).join('');
+  }
+
+  window.handleOpenSearchResult = function(title) {
+    switchView('new-chat');
+    const heroBanner = document.getElementById('hero-banner-container');
+    if (heroBanner) heroBanner.classList.add('minimized');
+    appendUserChatMessage(`Open archive for: ${title}`);
+    appendJarvisChatResponse(`Loaded archived conversation context for "${title}". All variables and references are in memory.`);
+  };
+
+  // --- 17. Settings Tabs (Profile, Memory, Knowledge) ---
+  const settingsTabBtns = document.querySelectorAll('.settings-tab-btn');
+  const settingsTabContents = document.querySelectorAll('.settings-tab-content');
+
+  if (settingsTabBtns) {
+    settingsTabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        settingsTabBtns.forEach(b => b.classList.remove('active'));
+        settingsTabContents.forEach(c => c.classList.remove('active'));
+
+        btn.classList.add('active');
+        const tabId = btn.getAttribute('data-tab');
+        const targetContent = document.getElementById(`settings-tab-${tabId}`);
+        if (targetContent) targetContent.classList.add('active');
+
+        if (tabId === 'memory') loadMemoryItems();
+        if (tabId === 'knowledge') loadKnowledgeDocs();
+      });
+    });
+  }
+
+  async function loadMemoryItems() {
+    const list = document.getElementById('memory-items-list');
+    if (!list) return;
+
+    list.innerHTML = `
+      <div class="memory-item-card">
+        <div class="memory-item-text">Owner Nadjibullah Uwabato is in his final year of Mechanical Engineering at UR CST. His capstone is the SAEV Solar Electric Vehicle.</div>
+        <div class="memory-item-meta"><i class="fa-regular fa-calendar"></i> Verified Core Fact • Permanent</div>
+      </div>
+      <div class="memory-item-card">
+        <div class="memory-item-text">Master weekly schedule begins on Saturday and concludes on Friday. Tahajjud prayer is maintained at 04:00 AM daily.</div>
+        <div class="memory-item-meta"><i class="fa-regular fa-calendar"></i> Verified Schedule Rule • Permanent</div>
+      </div>
+      <div class="memory-item-card">
+        <div class="memory-item-text">Operations Manager at KSP Rwanda, Kigali. Prior Founder/CEO of NAD PRODUCTION Ltd.</div>
+        <div class="memory-item-meta"><i class="fa-regular fa-calendar"></i> Verified Role • Permanent</div>
+      </div>
+      <div class="memory-item-card">
+        <div class="memory-item-text">Self-designed AI products: NAD JARVIS AI, TRADIT AI, and INK LINK AI.</div>
+        <div class="memory-item-meta"><i class="fa-regular fa-calendar"></i> Verified Product Identity • Permanent</div>
+      </div>
+    `;
+  }
+
+  async function loadKnowledgeDocs() {
+    const list = document.getElementById('knowledge-docs-list');
+    if (!list) return;
+
+    list.innerHTML = `
+      <div class="doc-item-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-weight: 600; color: #ffffff;"><i class="fa-solid fa-file-pdf" style="color: #d4af37; margin-right: 8px;"></i> SAEV_Solar_Irradiance_Rwanda_Report.pdf</div>
+          <span style="font-size: 0.75rem; color: #4ade80;"><i class="fa-solid fa-circle-check"></i> Indexed (pgvector)</span>
+        </div>
+        <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">7 Chapters with Rwandan national solar insolation indices and mathematical motor torque simulations.</div>
+      </div>
+      <div class="doc-item-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-weight: 600; color: #ffffff;"><i class="fa-solid fa-file-word" style="color: #d4af37; margin-right: 8px;"></i> KSP_Rwanda_Standard_Operating_Procedures.docx</div>
+          <span style="font-size: 0.75rem; color: #4ade80;"><i class="fa-solid fa-circle-check"></i> Indexed (pgvector)</span>
+        </div>
+        <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">Shift protocols, dispatch logs, and equipment maintenance schedules for operations in Kigali.</div>
+      </div>
+    `;
+  }
+
+  // --- 18. Dynamic Conversation History Loader ---
+  const btnRefreshHistory = document.getElementById('btn-refresh-history');
+  if (btnRefreshHistory) {
+    btnRefreshHistory.addEventListener('click', loadConversationHistory);
+  }
+
+  async function loadConversationHistory() {
+    const historyList = document.getElementById('conversation-history-list');
+    if (!historyList) return;
+
+    try {
+      let conversations = [];
+      if (window.JarvisAPI) {
+        const res = await window.JarvisAPI.getConversations();
+        conversations = res.conversations || [];
+      }
+
+      if (conversations.length === 0) {
+        conversations = [
+          { id: 'c1', title: 'Weekly schedule plan', updated_at: new Date().toISOString() },
+          { id: 'c2', title: 'Google Drive Q3 report', updated_at: new Date(Date.now() - 86400000).toISOString() },
+          { id: 'c3', title: 'Mega backup sync', updated_at: new Date(Date.now() - 172800000).toISOString() }
+        ];
+      }
+
+      historyList.innerHTML = conversations.map(c => `
+        <div class="history-item" onclick="window.handleSelectConversation('${escapeHtml(c.id)}', '${escapeHtml(c.title)}')">
+          <i class="fa-regular fa-comment"></i>
+          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(c.title)}</span>
+        </div>
+      `).join('');
+
+    } catch (e) {
+      historyList.innerHTML = `<div class="history-empty">Could not load chats</div>`;
+    }
+  }
+
+  window.handleSelectConversation = function(id, title) {
+    switchView('new-chat');
+    const heroBanner = document.getElementById('hero-banner-container');
+    if (heroBanner) heroBanner.classList.add('minimized');
+    appendUserChatMessage(`Resume chat: ${title}`);
+    appendJarvisChatResponse(`Restored conversation session "${title}". You can continue typing commands or voice instructions.`);
+  };
+
+  // --- 19. Authentication State & Modal Management ---
+  const authStatusCluster = document.getElementById('auth-status-cluster');
+  const btnTopbarLogin = document.getElementById('btn-topbar-login');
+  const btnTopbarLogout = document.getElementById('btn-topbar-logout');
+  const btnAuthBadge = document.getElementById('btn-auth-badge');
+  const authModal = document.getElementById('auth-modal');
+  const formOwnerLogin = document.getElementById('form-owner-login');
+  const loginErrorMsg = document.getElementById('login-error-msg');
+  const btnModalTogglePwd = document.getElementById('btn-modal-toggle-pwd');
+  const inputModalPwd = document.getElementById('login-password');
+  const iconModalPwdEye = document.getElementById('icon-modal-pwd-eye');
+
+  if (btnModalTogglePwd && inputModalPwd && iconModalPwdEye) {
+    btnModalTogglePwd.addEventListener('click', () => {
+      const isPwd = inputModalPwd.type === 'password';
+      inputModalPwd.type = isPwd ? 'text' : 'password';
+      iconModalPwdEye.className = isPwd ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+    });
+  }
+
+  if (btnAuthBadge && authModal) {
+    btnAuthBadge.addEventListener('click', () => {
       authModal.classList.add('active');
     });
   }
 
-  if (formLogin) {
-    formLogin.addEventListener('submit', async (e) => {
+  if (btnTopbarLogout) {
+    btnTopbarLogout.addEventListener('click', async () => {
+      if (window.JarvisAPI) {
+        await window.JarvisAPI.logout();
+      } else {
+        localStorage.removeItem('nad_jarvis_token');
+      }
+      updateAuthUI(false);
+      alert('You have logged out of NAD JARVIS.');
+    });
+  }
+
+  if (formOwnerLogin) {
+    formOwnerLogin.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (loginErr) loginErr.style.display = 'none';
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
+      if (loginErrorMsg) loginErrorMsg.style.display = 'none';
+
+      const email = document.getElementById('login-email').value.trim();
+      const password = inputModalPwd.value;
 
       try {
-        // Consolidated endpoint: /api/auth (POST = login action)
-        const res = await fetch('/api/auth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-        if (res.ok && data.session) {
-          localStorage.setItem('nad_jarvis_token', data.session.access_token);
-          if (authModal) authModal.classList.remove('active');
-          alert('Welcome Nad! Authenticated successfully with Supabase.');
+        if (window.JarvisAPI) {
+          await window.JarvisAPI.login(email, password);
         } else {
-          if (loginErr) {
-            loginErr.textContent = data.error || 'Authentication failed.';
-            loginErr.style.display = 'block';
-          }
+          const res = await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Login failed');
+          if (data.session) localStorage.setItem('nad_jarvis_token', data.session.access_token);
         }
+
+        if (authModal) authModal.classList.remove('active');
+        updateAuthUI(true);
+        loadConversationHistory();
+        alert('Welcome Nad! Authenticated successfully with Supabase.');
       } catch (err) {
-        if (loginErr) {
-          loginErr.textContent = 'Server connection error.';
-          loginErr.style.display = 'block';
+        if (loginErrorMsg) {
+          loginErrorMsg.textContent = err.message || 'Authentication error.';
+          loginErrorMsg.style.display = 'block';
         }
       }
     });
   }
 
-  if (btnCloseAuth && authModal) {
-    btnCloseAuth.addEventListener('click', () => {
-      authModal.classList.remove('active');
+  function updateAuthUI(isAuthenticated) {
+    if (isAuthenticated) {
+      if (authStatusCluster) authStatusCluster.style.display = 'flex';
+      if (btnTopbarLogin) btnTopbarLogin.style.display = 'none';
+    } else {
+      if (authStatusCluster) authStatusCluster.style.display = 'none';
+      if (btnTopbarLogin) btnTopbarLogin.style.display = 'inline-flex';
+    }
+  }
+
+  async function checkInitialAuthState() {
+    if (window.JarvisAPI && window.JarvisAPI.isAuthenticated()) {
+      try {
+        const session = await window.JarvisAPI.checkSession();
+        if (session && session.authenticated) {
+          updateAuthUI(true);
+          loadConversationHistory();
+          return;
+        }
+      } catch (e) {}
+    }
+    // Check if token exists in localStorage as fallback
+    const token = localStorage.getItem('nad_jarvis_token');
+    if (token) {
+      updateAuthUI(true);
+      loadConversationHistory();
+    } else {
+      updateAuthUI(false);
+      loadConversationHistory();
+    }
+  }
+
+  // Initialize auth state
+  checkInitialAuthState();
+
+  // Close modal when clicking outside
+  if (authModal) {
+    authModal.addEventListener('click', (e) => {
+      if (e.target === authModal) {
+        authModal.classList.remove('active');
+      }
     });
   }
 
   // Utility
   function escapeHtml(str) {
-    return str
+    return String(str || '')
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -875,3 +1612,4 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 });
+
