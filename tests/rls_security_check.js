@@ -8,10 +8,10 @@ const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://mock.supabase.co';
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'mock-anon-key';
+const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || 'mock-publishable-key';
 
 // Client simulating unauthenticated / anonymous attacker
-const unauthClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const unauthClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 const TABLES_TO_TEST = [
   'profiles',
@@ -32,7 +32,7 @@ async function runRlsAudit() {
   console.log('NAD JARVIS — SUPABASE RLS SECURITY VERIFICATION');
   console.log('====================================================\n');
 
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+  if (!process.env.SUPABASE_URL || (!process.env.SUPABASE_PUBLISHABLE_KEY && !process.env.SUPABASE_ANON_KEY)) {
     console.log('[DRY-RUN / STATIC VALIDATION MODE]');
     console.log('No live Supabase credentials detected in .env.');
     console.log('Performing policy structure and RLS checklist validation...\n');
