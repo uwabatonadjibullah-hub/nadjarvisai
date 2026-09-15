@@ -1322,6 +1322,7 @@ body, html {
   margin-bottom: 6px;
   background: linear-gradient(135deg, var(--text-white) 40%, #d4af37 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .section-header-wrap p {
