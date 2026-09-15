@@ -1,0 +1,1226 @@
+/* ==========================================================================
+   NAD JARVIS - Exact Glassmorphism Theme (Matched to User Screenshot)
+   ========================================================================== */
+
+:root {
+  --bg-black: #000000;
+  --bg-dark-1: #0a0a0d;
+  --bg-dark-2: #121216;
+  --text-white: #ffffff;
+  --text-muted: #a1a1aa;
+  --brand-invert: #ffffff;
+
+  /* Specular Glass Variables matching the screenshot */
+  --glass-card-bg: radial-gradient(120% 120% at 50% 0%, rgba(255, 255, 255, 0.08) 0%, rgba(18, 18, 24, 0.75) 60%, rgba(8, 8, 10, 0.88) 100%);
+  --glass-pill-bg: rgba(255, 255, 255, 0.05);
+  --glass-pill-bg-hover: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-specular: rgba(255, 255, 255, 0.22);
+  --glass-box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 24px 60px rgba(0, 0, 0, 0.8);
+
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Playfair Display', serif;
+}
+
+body.light-mode {
+  --bg-black: #f8fafc;
+  --bg-dark-1: #ffffff;
+  --bg-dark-2: #f1f5f9;
+  --text-white: #0f172a;
+  --text-muted: #64748b;
+  --brand-invert: #000000;
+
+  --glass-card-bg: radial-gradient(120% 120% at 50% 0%, rgba(255, 255, 255, 0.95) 0%, rgba(241, 245, 249, 0.85) 100%);
+  --glass-pill-bg: rgba(15, 23, 42, 0.04);
+  --glass-pill-bg-hover: rgba(15, 23, 42, 0.1);
+  --glass-border: rgba(15, 23, 42, 0.14);
+  --glass-border-specular: rgba(15, 23, 42, 0.28);
+  --glass-box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 20px 40px rgba(15, 23, 42, 0.12);
+}
+
+/* Reset & Base */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg-black);
+  color: var(--text-white);
+  font-family: var(--font-main);
+  overflow: hidden;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* 3D Woven Light Background Canvas Container */
+#woven-background-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: auto;
+  opacity: 0.85;
+  transition: opacity 0.4s ease;
+}
+
+/* App Main Layout */
+.app-layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* 1. Sidebar Component (Exact Glass & Pill Button Styling) */
+.sidebar {
+  width: 280px;
+  height: 100%;
+  background: var(--glass-card-bg);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border-right: 1px solid var(--glass-border);
+  box-shadow: var(--glass-box-shadow);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 10;
+}
+
+.sidebar.collapsed {
+  margin-left: -280px;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--glass-border-specular);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text-white);
+}
+
+.user-role {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.icon-btn-ghost {
+  background: var(--glass-pill-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.icon-btn-ghost:hover {
+  color: var(--text-white);
+  background: var(--glass-pill-bg-hover);
+  border-color: var(--glass-border-specular);
+}
+
+/* Sidebar Nav Items (Filleted Pill Buttons matching Screenshot) */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 22px;
+  background: var(--glass-pill-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 50px; /* Stadium filleted pill shape matching screenshot */
+  color: var(--text-white);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+.nav-item:hover {
+  background: var(--glass-pill-bg-hover);
+  border-color: var(--glass-border-specular);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.nav-item.active {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: var(--text-white);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.nav-icon {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+/* Sidebar History */
+.sidebar-history {
+  margin-top: 28px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.history-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  padding-left: 8px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding: 10px 16px;
+  border-radius: 50px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.history-item:hover {
+  background: var(--glass-pill-bg);
+  border-color: var(--glass-border);
+  color: var(--text-white);
+}
+
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding-top: 16px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.sidebar-footer a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.sidebar-footer a:hover {
+  color: var(--text-white);
+  text-decoration: underline;
+}
+
+/* Workspace Layout */
+.workspace {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Topbar Header with Specular Glass Pills */
+.topbar {
+  height: 68px;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--glass-border);
+  background: var(--glass-card-bg);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  z-index: 5;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid var(--glass-border-specular);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Specular Badges & Pill Buttons */
+.private-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-white);
+  padding: 8px 18px;
+  border-radius: 50px;
+  background: var(--glass-pill-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.btn-theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-white);
+  padding: 8px 20px;
+  border-radius: 50px;
+  background: var(--glass-pill-bg);
+  border: 1px solid var(--glass-border-specular);
+  backdrop-filter: blur(20px);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.btn-theme-toggle:hover {
+  background: var(--glass-pill-bg-hover);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* View Sections */
+.view-section {
+  display: none;
+  flex: 1;
+  width: 100%;
+  height: calc(100% - 68px);
+  overflow-y: auto;
+  position: relative;
+}
+
+.view-section.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* VIEW 1: Hero Section 5 (Exact Match to User Screenshot) */
+.hero-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 40px;
+}
+
+.hero-glass-card {
+  background: var(--glass-card-bg);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid var(--glass-border-specular);
+  border-radius: 32px; /* 32px smooth rounded corners matching screenshot */
+  padding: 54px 48px;
+  text-align: center;
+  max-width: 820px;
+  width: 100%;
+  box-shadow: var(--glass-box-shadow);
+}
+
+.hero-title {
+  font-family: var(--font-heading);
+  font-size: 3.4rem;
+  font-weight: 800;
+  margin-bottom: 18px;
+  letter-spacing: -0.5px;
+  color: var(--text-white);
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+.hero-subtitle {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 620px;
+  margin: 0 auto 36px auto;
+  font-weight: 400;
+}
+
+/* Hero Controls Cluster */
+.hero-controls-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.mic-radiating-wrapper {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.pulse-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  animation: pulseRadiate 3s infinite ease-out;
+}
+
+.ring-1 { width: 100%; height: 100%; animation-delay: 0s; }
+.ring-2 { width: 130%; height: 130%; animation-delay: 0.8s; }
+.ring-3 { width: 160%; height: 160%; animation-delay: 1.6s; }
+
+@keyframes pulseRadiate {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.mic-circle-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--text-white);
+  color: var(--bg-black);
+  border: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  z-index: 2;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.mic-circle-btn.rising {
+  transform: translateY(-40px) scale(1.15);
+}
+
+/* Start Interactive Chat Pill Button (Exact Match to Screenshot) */
+.chat-pill-trigger {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 28px;
+  background: var(--glass-pill-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border-specular);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.chat-pill-trigger:hover {
+  background: var(--glass-pill-bg-hover);
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.pill-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-white);
+}
+
+.sinusoidal-dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-white);
+  animation: waveSinusoidal 1.4s infinite ease-in-out;
+}
+
+.dot-1 { animation-delay: 0s; }
+.dot-2 { animation-delay: 0.2s; }
+.dot-3 { animation-delay: 0.4s; }
+
+@keyframes waveSinusoidal {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+/* Brand Slider */
+.brand-slider-section {
+  position: absolute;
+  bottom: 40px;
+  width: 100%;
+  max-width: 900px;
+  text-align: center;
+}
+
+.brand-slider-label {
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+.brand-slider-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 50px;
+  background: var(--glass-card-bg);
+  border: 1px solid var(--glass-border);
+  padding: 14px 0;
+  backdrop-filter: blur(24px);
+}
+
+.progressive-blur-left, .progressive-blur-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.progressive-blur-left {
+  left: 0;
+  background: linear-gradient(to right, var(--bg-black) 0%, transparent 100%);
+}
+
+.progressive-blur-right {
+  right: 0;
+  background: linear-gradient(to left, var(--bg-black) 0%, transparent 100%);
+}
+
+.brand-slider-track {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  width: max-content;
+  animation: slideInfinite 25s linear infinite;
+}
+
+@keyframes slideInfinite {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.brand-logo {
+  font-size: 1.8rem;
+  color: var(--text-white);
+  opacity: 0.7;
+}
+
+/* VIEW 2: Chat AI Glass Stream & WhatsApp Bar */
+.chat-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 24px 32px 32px 32px;
+  position: relative;
+}
+
+.chat-stream-container {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 84px;
+}
+
+.chat-bubble {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.bubble-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--glass-border-specular);
+}
+
+.bubble-text {
+  padding: 18px 24px;
+  background: var(--glass-card-bg);
+  backdrop-filter: blur(32px);
+  border: 1px solid var(--glass-border-specular);
+  border-radius: 24px;
+  max-width: 80%;
+  line-height: 1.65;
+  box-shadow: var(--glass-box-shadow);
+  color: var(--text-white);
+}
+
+.whatsapp-chat-bar {
+  position: absolute;
+  bottom: 24px;
+  left: 32px;
+  right: 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--glass-card-bg);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid var(--glass-border-specular);
+  border-radius: 50px;
+  box-shadow: var(--glass-box-shadow);
+}
+
+.chat-action-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.chat-action-btn:hover {
+  color: var(--text-white);
+}
+
+.whatsapp-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-white);
+  font-size: 1rem;
+  outline: none;
+  font-family: var(--font-main);
+}
+
+.chat-send-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--text-white);
+  color: var(--bg-black);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+}
+
+/* VIEW 3: Audio AI Cards */
+.audio-ai-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 30px;
+}
+
+.audio-status-card {
+  text-align: center;
+  background: var(--glass-card-bg);
+  backdrop-filter: blur(32px);
+  border: 1px solid var(--glass-border-specular);
+  border-radius: 24px;
+  padding: 24px 40px;
+  box-shadow: var(--glass-box-shadow);
+}
+
+.wave-visualizer-card {
+  width: 100%;
+  max-width: 820px;
+  height: 240px;
+  background: var(--glass-card-bg);
+  backdrop-filter: blur(32px);
+  border: 1px solid var(--glass-border-specular);
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: var(--glass-box-shadow);
+}
+
+#audio-wave-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.mic-toggle-btn {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--text-white);
+  color: var(--bg-black);
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  box-shadow: 0 0 35px rgba(255, 255, 255, 0.4);
+}
+
+/* VIEW 4: Schedule Spreadsheet */
+.schedule-container {
+  padding: 32px;
+}
+
+.spreadsheet-scroll-wrapper {
+  overflow-x: auto;
+  margin-top: 24px;
+}
+
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--glass-card-bg);
+  backdrop-filter: blur(32px);
+  border: 1px solid var(--glass-border-specular);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: var(--glass-box-shadow);
+}
+
+.schedule-table th, .schedule-table td {
+  border: 1px solid var(--glass-border);
+  padding: 14px 18px;
+  text-align: center;
+}
+
+.schedule-table th {
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 700;
+  color: var(--text-white);
+}
+
+.schedule-cell {
+  cursor: pointer;
+  height: 48px;
+}
+
+.schedule-cell:hover {
+  background: var(--glass-pill-bg-hover);
+}
+
+.event-block {
+  background: var(--text-white);
+  color: var(--bg-black);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+/* VIEW 5: Drives */
+.drives-container {
+  padding: 32px;
+}
+
+.drive-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.drive-card {
+  display: flex;
+  gap: 18px;
+  padding: 28px;
+  background: var(--glass-card-bg);
+  backdrop-filter: blur(32px);
+  border: 1px solid var(--glass-border-specular);
+  border-radius: 28px;
+  box-shadow: var(--glass-box-shadow);
+}
+
+.drive-icon {
+  font-size: 2.6rem;
+  color: var(--text-white);
+}
+
+.drive-details {
+  flex: 1;
+}
+
+.drive-details h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.storage-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--glass-border);
+  border-radius: 4px;
+  margin: 14px 0 8px 0;
+  overflow: hidden;
+}
+
+.storage-bar .fill {
+  height: 100%;
+  background: var(--text-white);
+}
+
+.usage-text {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* VIEW 6: Settings */
+.settings-container {
+  padding: 32px;
+}
+
+.settings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.settings-card {
+  padding: 32px;
+  background: var(--glass-card-bg);
+  backdrop-filter: blur(32px);
+  border: 1px solid var(--glass-border-specular);
+  border-radius: 28px;
+  box-shadow: var(--glass-box-shadow);
+}
+
+.form-group {
+  display: flex;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.settings-input {
+  flex: 1;
+  padding: 14px 20px;
+  background: var(--glass-pill-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 50px;
+  color: var(--text-white);
+  outline: none;
+  font-family: var(--font-main);
+}
+
+.btn-primary {
+  padding: 14px 28px;
+  background: var(--text-white);
+  color: var(--bg-black);
+  border: none;
+  border-radius: 50px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.25);
+}
+
+/* Legal Pages */
+.legal-container {
+  padding: 40px;
+}
+
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVE SYSTEM (Smart UX for All Touch Devices)
+   ========================================================================== */
+
+/* Mobile Sidebar Backdrop Glass Overlay */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  z-index: 998;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Mobile Day Pills (Hidden by default on Desktop) */
+.mobile-day-tabs {
+  display: none;
+}
+
+/* Media Query: Tablet & Mobile screens (width <= 900px) */
+@media (max-width: 900px) {
+  /* Layout adjustments */
+  .app-layout {
+    flex-direction: column;
+  }
+
+  /* Fixed Mobile Drawer Sidebar */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 85vw;
+    max-width: 320px;
+    height: 100vh;
+    z-index: 999;
+    transform: translateX(-100%);
+    margin-left: 0 !important;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  /* Topbar Mobile Navigation Header */
+  .topbar {
+    padding: 12px 16px;
+    padding-top: max(12px, env(safe-area-inset-top));
+    height: auto;
+  }
+
+  #btn-show-sidebar {
+    display: flex !important;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Hero Section Mobile Polish */
+  .hero-container {
+    padding: 16px 12px 32px 12px;
+  }
+
+  .hero-glass-card {
+    padding: 32px 20px;
+    border-radius: 28px;
+    width: 100%;
+  }
+
+  .hero-title {
+    font-size: 2.2rem;
+    line-height: 1.15;
+  }
+
+  .hero-subtitle {
+    font-size: 0.92rem;
+    line-height: 1.55;
+    margin-bottom: 24px;
+  }
+
+  .hero-controls-cluster {
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+  }
+
+  .chat-pill-trigger {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 20px;
+  }
+
+  /* Brand Slider on Mobile */
+  .brand-slider-section {
+    margin-top: 24px;
+    padding: 0 10px;
+  }
+
+  .brand-slider-label {
+    font-size: 0.65rem;
+    letter-spacing: 1.2px;
+  }
+
+  /* Chat View Mobile Floating Bar */
+  .chat-wrapper {
+    height: calc(100vh - 65px);
+  }
+
+  .chat-stream-container {
+    padding: 16px;
+    padding-bottom: 90px;
+  }
+
+  .whatsapp-chat-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 24px 24px 0 0;
+    padding: 12px 14px;
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+    background: rgba(10, 10, 13, 0.92);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid var(--glass-border-specular);
+    z-index: 20;
+    gap: 8px;
+  }
+
+  .whatsapp-input {
+    font-size: 16px; /* Prevents auto-zoom on iOS */
+    padding: 12px 16px;
+  }
+
+  .chat-action-btn, .chat-send-btn {
+    min-width: 44px;
+    min-height: 44px;
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Schedule Mobile View with Quick Filter Pills */
+  .schedule-container {
+    padding: 16px;
+  }
+
+  .schedule-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .mobile-day-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 6px 2px 16px 2px;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 12px;
+    margin-bottom: 8px;
+  }
+
+  .mobile-day-pill {
+    padding: 8px 16px;
+    font-size: 0.82rem;
+    border-radius: 30px;
+    background: var(--glass-pill-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+  }
+
+  .mobile-day-pill.active {
+    background: var(--text-white);
+    color: var(--bg-black);
+    font-weight: 700;
+    border-color: var(--text-white);
+  }
+
+  .spreadsheet-scroll-wrapper {
+    border-radius: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .schedule-table th:first-child,
+  .schedule-table td:first-child {
+    position: sticky;
+    left: 0;
+    background: rgba(18, 18, 24, 0.95);
+    z-index: 2;
+    border-right: 1px solid var(--glass-border-specular);
+    backdrop-filter: blur(10px);
+  }
+
+  /* Drives & Settings Mobile Cards */
+  .drives-container, .settings-container, .legal-container {
+    padding: 20px 16px;
+  }
+
+  .drive-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .drive-card, .settings-card {
+    padding: 20px 16px;
+    border-radius: 20px;
+  }
+
+  .form-group {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .settings-input {
+    font-size: 16px; /* Prevents iOS focus zoom */
+    width: 100%;
+  }
+
+  .btn-primary {
+    width: 100%;
+    min-height: 48px;
+  }
+}
+
+/* Extra Small Phones (width <= 480px) */
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 1.8rem;
+  }
+
+  .private-badge span {
+    display: none; /* Hide text, keep icon */
+  }
+
+  .private-badge {
+    padding: 6px 10px;
+  }
+
+  .whatsapp-chat-bar .chat-action-btn[title="Camera"] {
+    display: none; /* Streamline mobile input bar */
+  }
+}
+
+/* Touch active state feedback */
+@media (hover: none) {
+  .nav-item:active,
+  .btn-theme-toggle:active,
+  .icon-btn-ghost:active,
+  .chat-send-btn:active,
+  .mic-circle-btn:active,
+  .btn-primary:active {
+    transform: scale(0.95);
+    opacity: 0.85;
+    transition: transform 0.1s ease;
+  }
+}
+
+/* AI Model Transparency Badge (Section 7) */
+.model-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 3px 10px;
+  letter-spacing: 0.03em;
+}
+
+/* Auth Modal & Connect Button Styling */
+.auth-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.auth-modal-overlay.active {
+  display: flex;
+}
+.auth-modal-card {
+  background: var(--glass-card-bg);
+  border: 1px solid var(--glass-border-specular);
+  box-shadow: var(--glass-box-shadow);
+  border-radius: 24px;
+  padding: 32px;
+  width: 90%;
+  max-width: 420px;
+  text-align: center;
+}
+.auth-modal-card h3 {
+  font-family: var(--font-heading);
+  margin-bottom: 8px;
+}
+.auth-modal-card p {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  margin-bottom: 20px;
+}
+.btn-connect-oauth {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border-specular);
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-connect-oauth:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+

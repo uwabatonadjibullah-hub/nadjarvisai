@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>NAD Jarvis</title>
+  <meta name="description"
+    content="NAD Jarvis is a private, voice-activated personal AI assistant for daily workflows, cloud drives, and scheduling.">
+
+  <!-- FontAwesome Icons & Google Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap"
+    rel="stylesheet">
+
+  <!-- Three.js 3D WebGL Library for Woven Light Background -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- Modern Glassmorphism & Cinematic Styling -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <!-- Full-Page Interactive 3D Woven Light Particle Background Canvas -->
+  <div id="woven-background-canvas"></div>
+
+  <!-- Mobile Sidebar Backdrop Glass Overlay -->
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+  <!-- App Main Layout Container -->
+  <div id="app-root" class="app-layout">
+
+    <!-- 1. Leftbar Collapsible Navigation Sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="user-profile">
+          <img id="sidebar-profile-img" src="sided_logo.jpg" alt="Nad Profile" class="profile-avatar">
+          <div class="user-info">
+            <span class="user-name">Nad</span>
+            <span class="user-role">Owner & Administrator</span>
+          </div>
+        </div>
+        <button id="btn-hide-sidebar" class="icon-btn-ghost" title="Hide Sidebar">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="new-chat">
+          <i class="fa-solid fa-plus nav-icon"></i>
+          <span>New Chat</span>
+        </button>
+        <button class="nav-item" data-view="chat-ai">
+          <i class="fa-solid fa-message nav-icon"></i>
+          <span>Chat AI</span>
+        </button>
+        <button class="nav-item" data-view="audio-ai">
+          <i class="fa-solid fa-microphone nav-icon"></i>
+          <span>Audio AI</span>
+        </button>
+        <button class="nav-item" data-view="schedule">
+          <i class="fa-solid fa-calendar-days nav-icon"></i>
+          <span>Schedule</span>
+        </button>
+        <button class="nav-item" data-view="drives">
+          <i class="fa-solid fa-hard-drive nav-icon"></i>
+          <span>Drives / Memories</span>
+        </button>
+        <button class="nav-item" data-view="settings">
+          <i class="fa-solid fa-sliders nav-icon"></i>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-history">
+        <div class="history-title">Recent History</div>
+        <div class="history-list">
+          <div class="history-item"><i class="fa-regular fa-comment"></i> Weekly schedule plan</div>
+          <div class="history-item"><i class="fa-regular fa-comment"></i> Google Drive Q3 report</div>
+          <div class="history-item"><i class="fa-regular fa-comment"></i> Mega backup sync</div>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <a href="/privacy" id="link-privacy">Privacy Policy</a>
+        <span>•</span>
+        <a href="/terms" id="link-terms">Terms of Service</a>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Container -->
+    <main class="workspace">
+
+      <!-- Header Topbar with Show Sidebar Toggle & Theme Switcher -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button id="btn-show-sidebar" class="icon-btn-ghost" style="display: none;" title="Show Sidebar">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div class="app-brand-mini">
+            <img src="icon-logo.jpg" alt="Jarvis" class="brand-icon">
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="private-badge">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Private Session</span>
+          </div>
+
+          <!-- Dark / Light Mode Toggle Button -->
+          <button id="btn-theme-toggle" class="btn-theme-toggle" title="Toggle Dark / Light Mode">
+            <i id="icon-theme" class="fa-solid fa-moon"></i>
+            <span id="txt-theme-mode">Dark</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- View Containers -->
+
+      <!-- VIEW 1: New Chat (Hero Section 5 with Infinite Brand Slider & Woven Light Background) -->
+      <section id="view-new-chat" class="view-section active">
+        <div class="hero-container">
+          <div class="hero-glass-card">
+            <h1 class="hero-title">NAD Jarvis AI</h1>
+            <p class="hero-subtitle">
+              Your private voice-activated digital companion. Intelligent reasoning, unified cloud storage management,
+              and smart scheduling.
+            </p>
+
+            <!-- Bottom Control Cluster: Radiating Mic + Sinusoidal Bouncing Dots Pill -->
+            <div class="hero-controls-cluster">
+              <div class="mic-radiating-wrapper" id="mic-trigger-hero" title="Click to Speak (Audio AI)">
+                <div class="pulse-ring ring-1"></div>
+                <div class="pulse-ring ring-2"></div>
+                <div class="pulse-ring ring-3"></div>
+                <button class="mic-circle-btn" id="btn-mic-hero">
+                  <i class="fa-solid fa-microphone"></i>
+                </button>
+              </div>
+
+              <div class="chat-pill-trigger" id="pill-trigger-hero" title="Click to open Chat AI">
+                <span class="pill-text">Start Interactive Chat</span>
+                <div class="sinusoidal-dots">
+                  <span class="dot dot-1"></span>
+                  <span class="dot dot-2"></span>
+                  <span class="dot dot-3"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hero Section 5 - Infinite Brand Logo Slider with Progressive Blur Overlay -->
+          <div class="brand-slider-section">
+            <div class="brand-slider-label">POWERING INTEGRATED WORKFLOWS & CLOUD ECOSYSTEMS</div>
+            <div class="brand-slider-container">
+              <div class="progressive-blur-left"></div>
+              <div class="progressive-blur-right"></div>
+
+              <div class="brand-slider-track">
+                <!-- Duplicate logos for smooth infinite loop -->
+                <div class="brand-logo"><i class="fa-brands fa-google-drive"></i></div>
+                <div class="brand-logo"><i class="fa-brands fa-nvidia"></i></div>
+                <div class="brand-logo"><i class="fa-brands fa-stripe"></i></div>
+                <div class="brand-logo"><i class="fa-brands fa-github"></i></div>
+                <div class="brand-logo"><i class="fa-brands fa-nike"></i></div>
+                <div class="brand-logo"><i class="fa-solid fa-lemon"></i></div>
+                <div class="brand-logo"><i class="fa-brands fa-laravel"></i></div>
+                <div class="brand-logo"><i class="fa-brands fa-figma"></i></div>
+                <div class="brand-logo"><i class="fa-solid fa-triangle-exclamation"></i></div>
+
+                <!-- Loop Repeat -->
+                <div class="brand-logo"><i class="fa-brands fa-google-drive"></i></div>
+                <div class="brand-logo"><i class="fa-brands fa-nvidia"></i></div>
+                <div class="brand-logo"><i class="fa-brands fa-stripe"></i></div>
+                <div class="brand-logo"><i class="fa-brands fa-github"></i></div>
+                <div class="brand-logo"><i class="fa-brands fa-nike"></i></div>
+                <div class="brand-logo"><i class="fa-solid fa-lemon"></i></div>
+                <div class="brand-logo"><i class="fa-brands fa-laravel"></i></div>
+                <div class="brand-logo"><i class="fa-brands fa-figma"></i></div>
+                <div class="brand-logo"><i class="fa-solid fa-triangle-exclamation"></i></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: Chat AI (WhatsApp Style Text Field & Message Stream) -->
+      <section id="view-chat-ai" class="view-section">
+        <div class="chat-wrapper">
+          <div class="chat-stream-container" id="chat-stream-container">
+            <div class="chat-bubble ai-bubble">
+              <img src="icon-logo.jpg" class="bubble-avatar" alt="Jarvis">
+              <div class="bubble-text">
+                Hello Nad! I am fully operational. How can I assist your schedule or cloud storage today?
+              </div>
+            </div>
+          </div>
+
+          <!-- WhatsApp Style Floating Input Bar -->
+          <div class="whatsapp-chat-bar">
+            <button class="chat-action-btn" title="Attach Files"><i class="fa-solid fa-paperclip"></i></button>
+            <button class="chat-action-btn" title="Camera"><i class="fa-solid fa-camera"></i></button>
+
+            <input type="text" id="chat-input-field" class="whatsapp-input"
+              placeholder="Ask Jarvis or give a command... (e.g. Schedule meeting on Saturday at 10 AM)"
+              autocomplete="off">
+
+            <button class="chat-action-btn" title="Record Audio"><i class="fa-solid fa-microphone"></i></button>
+            <button class="chat-send-btn" id="btn-chat-send" title="Send Message"><i
+                class="fa-solid fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: Audio AI (Sinusoidal Ocean Wave Canvas Visualizer) -->
+      <section id="view-audio-ai" class="view-section">
+        <div class="audio-ai-container">
+          <div class="audio-status-card">
+            <h2>Audio AI Voice Intelligence</h2>
+            <p id="txt-mic-status">Listening for "Hello, Jarvis"...</p>
+          </div>
+
+          <!-- Ocean Wave Canvas -->
+          <div class="wave-visualizer-card">
+            <canvas id="audio-wave-canvas"></canvas>
+          </div>
+
+          <div class="audio-controls">
+            <button class="mic-toggle-btn" id="btn-toggle-mic-listening">
+              <i class="fa-solid fa-microphone"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 4: Schedule (Saturday to Friday Spreadsheet) -->
+      <section id="view-schedule" class="view-section">
+        <div class="schedule-container">
+          <div class="schedule-header">
+            <h2>Weekly Schedule Spreadsheet</h2>
+            <p>Week starts on Saturday and ends on Friday. Each row represents a 30-minute interval.</p>
+          </div>
+
+          <!-- Mobile Day Quick Filter Selector Pills -->
+          <div class="mobile-day-tabs" id="mobile-day-tabs">
+            <button class="mobile-day-pill active" data-day="all">All Days</button>
+            <button class="mobile-day-pill" data-day="sat">Sat</button>
+            <button class="mobile-day-pill" data-day="sun">Sun</button>
+            <button class="mobile-day-pill" data-day="mon">Mon</button>
+            <button class="mobile-day-pill" data-day="tue">Tue</button>
+            <button class="mobile-day-pill" data-day="wed">Wed</button>
+            <button class="mobile-day-pill" data-day="thu">Thu</button>
+            <button class="mobile-day-pill" data-day="fri">Fri</button>
+          </div>
+
+          <div class="spreadsheet-scroll-wrapper">
+            <table class="schedule-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Saturday</th>
+                  <th>Sunday</th>
+                  <th>Monday</th>
+                  <th>Tuesday</th>
+                  <th>Wednesday</th>
+                  <th>Thursday</th>
+                  <th>Friday</th>
+                </tr>
+              </thead>
+              <tbody id="schedule-table-body">
+                <!-- Dynamically generated rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 5: Drives / Memories (Google Drive & Mega Manager) -->
+      <section id="view-drives" class="view-section">
+        <div class="drives-container">
+          <h2>Cloud Storage & Memories</h2>
+          <p>Collection of all connected drives (Google Drive & Mega Storage)</p>
+
+          <div class="drive-cards-grid">
+            <div class="drive-card">
+              <div class="drive-icon"><i class="fa-brands fa-google-drive"></i></div>
+              <div class="drive-details">
+                <h3>Google Drive</h3>
+                <p id="drive-status-desc">Google Drive & Workspace Integration</p>
+                <div class="storage-bar">
+                  <div class="fill" style="width: 45%;"></div>
+                </div>
+                <span class="usage-text">45 GB of 100 GB used</span>
+                <div>
+                  <button id="btn-connect-google" class="btn-connect-oauth">
+                    <i class="fa-brands fa-google"></i> Connect / Authorize Drive
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="drive-card">
+              <div class="drive-icon"><i class="fa-solid fa-cloud"></i></div>
+              <div class="drive-details">
+                <h3>Mega Storage</h3>
+                <p>uwabatonadjibullah@gmail.com</p>
+                <div class="storage-bar">
+                  <div class="fill" style="width: 68%;"></div>
+                </div>
+                <span class="usage-text">34 GB of 50 GB used</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="drive-file-list" style="margin-top: 24px;"></div>
+        </div>
+      </section>
+
+      <!-- VIEW 6: Settings & Advice -->
+      <section id="view-settings" class="view-section">
+        <div class="settings-container">
+          <h2>Settings & Daily Performance</h2>
+
+          <div class="settings-grid">
+            <div class="settings-card">
+              <h3>Profile Picture URL</h3>
+              <div class="form-group">
+                <input type="text" id="cfg-profile-url" class="settings-input" placeholder="Paste image link URL...">
+                <button id="btn-save-profile-img" class="btn-primary">Update Profile Image</button>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <h3>Daily Assistant Advice</h3>
+              <p class="advice-text">
+                "Nad, your focus index is high today. Allocate 2 hours to your final-year Mechanical Engineering
+                capstone project before reviewing KSP Rwanda operations."
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 7: Privacy Policy -->
+      <section id="view-privacy" class="view-section">
+        <div class="legal-container">
+          <h2>Privacy Policy</h2>
+          <p>NAD Jarvis is a private personal assistant designed for Nadjibullah Uwabato.</p>
+        </div>
+      </section>
+
+      <!-- VIEW 8: Terms of Service -->
+      <section id="view-terms" class="view-section">
+        <div class="legal-container">
+          <h2>Terms of Service</h2>
+          <p>Strictly private for single-user authorization.</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Owner Authentication Modal (Single User Supabase Auth) -->
+  <div id="auth-modal" class="auth-modal-overlay">
+    <div class="auth-modal-card">
+      <div style="font-size: 2.2rem; color: #d4af37; margin-bottom: 12px;">
+        <i class="fa-solid fa-user-shield"></i>
+      </div>
+      <h3>Owner Verification</h3>
+      <p>Authenticate as <strong>Nad</strong> to establish your secure Supabase session.</p>
+
+      <form id="form-owner-login" style="display: flex; flex-direction: column; gap: 14px; text-align: left;">
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted);">Email</label>
+          <input type="email" id="login-email" value="uwabatonadjibullah@gmail.com" readonly class="settings-input"
+            style="width: 100%; margin-top: 4px; opacity: 0.8;">
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted);">Master Password</label>
+          <input type="password" id="login-password" placeholder="Enter password..." required class="settings-input"
+            style="width: 100%; margin-top: 4px;">
+        </div>
+        <div id="login-error-msg" style="color: #ef4444; font-size: 0.82rem; display: none;"></div>
+        <button type="submit" class="btn-primary" style="margin-top: 6px;">Sign In to NAD JARVIS</button>
+        <button type="button" id="btn-close-auth-modal" class="btn-connect-oauth"
+          style="margin-top: 2px; justify-content: center;">Continue in Offline Mode</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

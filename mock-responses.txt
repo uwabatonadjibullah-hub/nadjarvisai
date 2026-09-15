@@ -1,0 +1,282 @@
+====================================================================
+PERSONAL PROFILE — NADJIBULLAH UWABATO (NAD)
+For AI Assistant Context / Personal "Jarvis" Reference
+Last updated: July 29, 2026
+====================================================================
+
+--------------------------------------------------------------------
+1. IDENTITY
+--------------------------------------------------------------------
+Full Name: Nadjibullah Uwabato
+Professional Brand: NAD (also styled "IAM NAD" / "NAD PRODUCTION")
+Location: Kigali, Rwanda
+Faith: Muslim. Long-term goal: memorizing the Quran. Maintains a
+disciplined daily worship routine (Tahajjud, five daily prayers,
+Quran recitation/murajaah, Adhkar, Istighfar, Jummah).
+Relationship Status: In a committed relationship; partner's nickname
+is "Orchid."
+Support System: Relies on family support, particularly his brother's
+help with university administrative logistics.
+
+Primary Interests: Artificial Intelligence, Filmmaking, Mechanical
+Engineering, Software Development, Entrepreneurship, Digital
+Education.
+
+--------------------------------------------------------------------
+2. EDUCATION
+--------------------------------------------------------------------
+- Final-year Bachelor of Science in Mechanical Engineering, University
+  of Rwanda, College of Science and Technology, Kigali.
+- Specialization: Production Engineering.
+- Capstone / Major Academic Project: "Design and Simulation of a
+  Solar-Assisted Electric Vehicle (SAEV)." A comprehensive
+  seven-chapter report using local Rwandan meteorological data to
+  inform mechanical vehicle dynamics and sizing calculations.
+- Engineering tools/skills: SolidWorks, MATLAB, Simulink, Simscape,
+  kinematic modelling, robot control, solar power systems, mobile
+  robotics, CAD/solid modeling (e.g. sourcing references for
+  electric/solar buggies on GrabCAD).
+- Additional training/courses completed: AI Career Essentials,
+  Digital Marketing, Filmmaking, Video Editing, plus a Data Scientist
+  track on DataCamp (Python, Pandas, NumPy for data analysis/cleaning).
+  Also learns extensively via YouTube and Udemy.
+
+--------------------------------------------------------------------
+3. PROFESSIONAL EXPERIENCE & ENTREPRENEURSHIP
+--------------------------------------------------------------------
+- Current: Operations Manager, KSP Rwanda, Kigali — overseeing
+  operations and strategic initiatives.
+- Previous: Founder, CEO & Managing Director, NAD PRODUCTION Ltd,
+  Kigali — led a freelance creative production studio. Voluntarily
+  initiated formal business closure with the Rwanda Development
+  Board to prioritize final-year university studies.
+- Entrepreneurial mindset: consistently expresses the goal of
+  building companies rather than working for one. Business/venture
+  ideas explored: AI agencies, SaaS products, AI education, GenAI
+  solutions for African agriculture, podcast platforms, film
+  production studios, digital products.
+- Hardware setup: GMKtec mini PC configured as a custom "manager
+  view" development environment.
+
+--------------------------------------------------------------------
+4. TECHNICAL & SOFTWARE DEVELOPMENT SKILLS
+--------------------------------------------------------------------
+Full-Stack / Dev: Node.js, Firebase, Firestore, Firebase
+Authentication, Cloudflare, Vercel, Netlify, React, TailwindCSS,
+HTML, CSS, JavaScript, JSX, Git workflow optimization.
+
+Data: Python, Pandas, NumPy (structured data analysis and cleaning).
+
+Apps built or planned: Podcast platform, admin dashboards, LMS, quiz
+systems, e-commerce pages, dashboard analytics, student management
+systems, announcement systems, blog CMS.
+
+Approach to learning: Prefers accelerating development through AI
+tools ("vibe coding") rather than traditional programming-first
+learning — learns by building real projects fast with AI assistance.
+
+--------------------------------------------------------------------
+5. AI JOURNEY & PROMPT ENGINEERING
+--------------------------------------------------------------------
+This is one of the strongest and most consistent themes: Nad doesn't
+just want to use AI — he wants to become someone who builds with AI.
+
+Tools explored in depth: ChatGPT, Claude, Gemini, Veo 3, Sora, Kling
+AI, Nano Banana, Google AI Studio, Omni Flash.
+
+AI Products Created & Developed by Nad (self-built, not just used):
+- NAD JARVIS AI — a personal AI assistant system built by Nad.
+- TRADIT AI — an AI product/platform developed by Nad.
+- INK LINK AI — an AI product/platform developed by Nad.
+These are Nad's own original AI builds and should be credited to him
+as creator/developer, distinct from the third-party AI tools he uses
+(ChatGPT, Claude, Gemini, etc.). When discussing his portfolio,
+skills, or achievements, an AI assistant should treat these as
+flagship proof of his ability to design and ship AI-powered products,
+not just prompt existing tools.
+
+Prompt engineering style: Highly detailed and technical rather than
+generic. When generating characters/scenes, specifies: lens, focal
+length, lighting, facial consistency, costume, atmosphere, emotional
+tone, framing, storyboard composition, camera movement, and
+continuity. Frequently requests prompts optimized specifically for
+Nano Banana, Veo 3, Gemini, and Omni Flash.
+
+--------------------------------------------------------------------
+6. FILMMAKING & CREATIVE PRODUCTION
+--------------------------------------------------------------------
+One of Nad's biggest passions — he thinks like a filmmaker first.
+
+Post-production tools: Adobe Premiere Pro, After Effects, DaVinci
+Resolve, Blender.
+
+Work/output includes: documentaries, commercials, AI films,
+storyboards, cinematic shot design, camera movement planning,
+lighting design, interview framing, visual storytelling.
+
+Projects & affiliations:
+- URUMURI STUDIOS — associated short films, including "GAJU"
+  (trailer and short film).
+- OMNITALES HUB — developed a 6-week operational schedule and master
+  prompts for a multi-channel faceless video production strategy
+  using generative AI.
+- GET BETTER PODCAST — full platform including audio, video, blogs,
+  shop, admin studio, upload system, and podcast player.
+- NAD Portfolio — personal website showcasing engineering,
+  filmmaking, and AI work.
+- United Gen. Basketball — compiled an administrative script, video
+  prototype, shot list, and full-stack web code for a brand platform
+  pitch aimed at club leadership.
+
+Storytelling themes explored: Islamic AI films, Cristiano Ronaldo
+stories, documentary storyboards, inspirational documentaries,
+African entrepreneurship stories.
+
+Future ambition: Actively researching international fellowships and
+MFA programs in Film Production, targeting the Fall 2027 admissions
+cycle.
+
+--------------------------------------------------------------------
+7. DESIGN TASTE (VISUAL IDENTITY)
+--------------------------------------------------------------------
+Highly consistent aesthetic preferences across projects:
+- Glassmorphism
+- Black backgrounds with gold accents
+- White typography
+- Premium, cinematic UI
+- Space/galaxy themes (e.g. an atom at the center with orbiting
+  electrons, blending science visuals with glassmorphism)
+- Animated backgrounds, Framer Motion
+- Large, impactful hero sections
+
+Thinks visually/imaginatively rather than abstractly — imagines
+galaxies, atoms, cinematic lighting, racing cars, forests,
+futuristic dashboards, and premium glass interfaces.
+
+--------------------------------------------------------------------
+8. AGRICULTURE / AFRICA-FOCUSED AI INTERESTS
+--------------------------------------------------------------------
+Growing interest in building GenAI solutions for African agriculture,
+including: AI crop diagnosis, agricultural copilots, smart farming,
+mechanization support, and farmer assistant tools.
+
+--------------------------------------------------------------------
+9. STRENGTHS
+--------------------------------------------------------------------
+- Strong long-term vision
+- Exceptional curiosity across engineering, AI, design, and film
+- High creativity, especially in visual storytelling
+- Fast learner, quick to adopt new tools
+- Skilled at connecting ideas across disciplines (engineering + AI +
+  film + software + business)
+- Proven AI builder: creator and developer of his own AI products —
+  NAD JARVIS AI, TRADIT AI, and INK LINK AI
+
+--------------------------------------------------------------------
+10. GROWTH AREAS / CHALLENGES
+--------------------------------------------------------------------
+- Tends to take on many ambitious projects simultaneously, making
+  completion harder
+- Perfectionism (especially UI design and AI prompt crafting) can
+  slow progress
+- Broad interests across many domains make prioritization important
+- Actively working on focus: has scheduled a 5-month intensive
+  execution sprint (July 1, 2026 – November 30, 2026) dedicated to
+  mastering advanced software frameworks and post-production suites
+
+--------------------------------------------------------------------
+11. LONG-TERM VISION
+--------------------------------------------------------------------
+"To become a multidisciplinary creator who combines engineering,
+artificial intelligence, filmmaking, and software development to
+build products, tell powerful stories, and create companies that
+have an impact in Africa and beyond."
+
+Personal growth goals: financial independence, high skill mastery,
+international recognition. Draws inspiration from long-term-thinking
+entrepreneurs such as Warren Buffett — favors durable careers over
+short-term wins.
+
+--------------------------------------------------------------------
+12. WEEKLY SCHEDULE
+--------------------------------------------------------------------
+IMPORTANT: Nad's week starts on SATURDAY and ends on FRIDAY (not the
+Mon–Sun convention). Any AI assistant referencing "today," "tomorrow,"
+or day-ordering in relation to his schedule should treat Saturday as
+day 1 and Friday as day 7 (the closing/rest-focused day, centered on
+Jummah).
+
+Daily rhythm is anchored in Islamic worship and structured work
+blocks. General pattern across the week (Saturday → Friday):
+
+04:00 — Wake up for Tahajjud
+04:30 — Fajr Prayer + Quran reading/recitation
+05:30 — Adhkar (remembrance/dhikr)
+06:00 — Cleaning (Sat/Mon/Wed/Fri) or Workout (Sun/Tue/Thu)
+06:30 — Shower
+07:00 — Breakfast
+07:30 — Transport (commute)
+
+Daytime blocks (varies by day):
+- Saturday: Digital Literacy (morning), Filmmaking (afternoon)
+- Sunday: Digital Literacy (morning), Filmmaking (afternoon)
+- Monday: Filmmaking (morning), ZAD Academy (late morning),
+  Dhuhr Prayer, Documentation + Software Development (afternoon)
+- Tuesday: Filmmaking (morning), ZAD Academy, Dhuhr Prayer,
+  Short Film work + Software Development (afternoon)
+- Wednesday: Filmmaking (morning), ZAD Academy, Dhuhr Prayer,
+  Documentation + Software Development (afternoon)
+- Thursday: Filmmaking (morning), ZAD Academy, Dhuhr Prayer,
+  Documentation + Software Development (afternoon). Evening differs
+  from other weekdays: 18:00 Script Writing, 18:30 Maghrib Prayer,
+  19:00 Evening Adhkar (instead of Script Writing), 19:30 Isha Prayer.
+- Friday: Quran Murajaah (morning), Istighfar, Jummah Prayer
+  (midday), Family Time + Asr Prayer (13:30), Editing/Social Accounts
+  (16:00), Adhkar (18:00), Maghrib Prayer (18:30), Script writing
+  (19:00), Isha Prayer (19:30), Break (20:00 onward, instead of
+  Editing) before Sleep.
+
+Afternoon/evening (Saturday, Sunday, Monday, Tuesday, Wednesday):
+- 17:00 — Asr Prayer + Transport
+- 18:00 — Adhkar
+- 18:30 — Maghrib Prayer
+- 19:00 — Script Writing
+- 19:30 — Isha Prayer
+- 20:00 — Editing (video/content)
+- 22:00 — Sleep
+
+(Thursday and Friday evenings deviate from this pattern — see notes
+above.)
+
+Recurring commitments: ZAD Academy (Mon–Thu, late morning),
+Filmmaking practice (daily mornings), Software Development (Mon–Thu
+afternoons), Script Writing (evenings), Editing (nightly), Family
+time on Friday.
+
+--------------------------------------------------------------------
+13. HOW TO USE THIS PROFILE (NOTE TO THE AI ASSISTANT)
+--------------------------------------------------------------------
+When assisting Nadjibullah ("Nad"):
+- Assume familiarity with AI tools (ChatGPT, Claude, Gemini, Veo 3,
+  Nano Banana) — he prefers advanced, specific, technically detailed
+  guidance over beginner explanations.
+- Default visual/design suggestions toward his established aesthetic:
+  glassmorphism, black + gold, premium/cinematic, space-themed motifs.
+- When discussing filmmaking or AI-generated video/image prompts,
+  include cinematography-level detail (lens, lighting, camera
+  movement, framing) by default.
+- Be mindful of his tendency toward juggling multiple ambitious
+  projects and perfectionism — help him prioritize and ship rather
+  than over-polish.
+- Respect his religious practice and daily schedule; worship blocks
+  (prayer times, Quran study) are non-negotiable fixed points in his
+  day.
+- He is engineering-trained (mechanical/production) as well as a
+  self-taught full-stack/AI builder — comfortable with technical
+  depth in both domains.
+- Long-term goal orientation: frame advice in service of building
+  impactful companies/products across Africa, not just short-term
+  tasks.
+====================================================================
+END OF PROFILE
+====================================================================

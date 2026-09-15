@@ -1,0 +1,231 @@
+====================================================================
+NAD JARVIS — AGENT WORK ORDER FOR GOOGLE ANTIGRAVITY
+====================================================================
+Read this entire file before writing or changing any code.
+This is a backend/system work order. It does not describe visual
+design, layout, colors, or UI appearance. Where the frontend is
+mentioned, it is only to define what data/functions it must be able
+to call — never how it should look.
+
+--------------------------------------------------------------------
+0. NON-NEGOTIABLE CONSTRAINTS (apply to every task below)
+--------------------------------------------------------------------
+- NAD JARVIS is PRIVATE and SINGLE-USER. There is exactly one owner
+  account. Never build public sign-up, multi-tenant logic, invite
+  flows, or anything that assumes more than one user.
+- The backend platform is SUPABASE. Do not introduce Firebase,
+  Firestore, Firebase Auth, or Firebase Storage anywhere. If any of
+  these already exist in the codebase, they must be removed and
+  replaced with the Supabase equivalent (see Section 2).
+- Hosting/runtime is VERCEL (serverless/edge functions for all
+  server-side logic).
+- All secrets (AI provider keys, Supabase service-role key, Google
+  OAuth client secret, refresh tokens) live ONLY in server-side
+  environment variables. Never in client-side code, never committed
+  to Git, never returned in any API response.
+- Every Supabase table that the client can reach must have Row-Level
+  Security enabled and scoped to the single owner's user ID. No
+  exceptions.
+- A tool call must never report success unless it actually succeeded.
+  Destructive or consequential actions (delete, send, overwrite,
+  write to a connected Drive/Calendar/Gmail) require an explicit
+  confirmation step before executing.
+
+--------------------------------------------------------------------
+1. FIRST STEP — AUDIT BEFORE BUILDING
+--------------------------------------------------------------------
+Before writing new code:
+1. Scan the current repository and list what already exists: which
+   backend platform is actually wired up today (Firebase and/or
+   Supabase), which API routes exist, which tables/collections exist,
+   which AI providers are already called, and which Google Workspace
+   scopes (if any) are already connected.
+2. Produce a short internal progress report comparing what exists
+   against Sections 2–7 of this file, so gaps are explicit before any
+   migration work starts.
+3. If Firebase is present in any form, treat its removal and
+   replacement with Supabase as the highest-priority task before any
+   new feature work.
+4. Do not delete or overwrite existing working functionality without
+   first confirming with NAD what depends on it.
+
+--------------------------------------------------------------------
+2. BACKEND MIGRATION TARGET — SUPABASE (PRIMARY FOCUS OF THIS FILE)
+--------------------------------------------------------------------
+Migrate/implement the backend so that Supabase is the only
+data/auth/storage platform:
+
+2.1 Auth
+- Use Supabase Auth for the single owner account (email/password to
+  start; leave room to add a passkey/MFA method later).
+- No other identity provider is required for v1.
+- Server-side code must verify the Supabase session/JWT on every
+  protected API route; never trust a client-supplied user ID.
+
+2.2 Database (Supabase Postgres)
+Create/confirm these tables, each with RLS restricting all access to
+the single owner's auth.uid():
+- profiles            (owner profile & preferences)
+- conversations        (chat sessions)
+- messages             (message content, role, timestamps, metadata)
+- providers            (configured AI providers)
+- models               (per-provider model capabilities/limits)
+- provider_usage       (requests, latency, errors, token/cost estimate)
+- connections          (connected external accounts: Google, Mega, etc.)
+- drive_sources        (nicknamed Drive connections + scope granted)
+- documents            (indexed document metadata + source reference,
+                         NOT full file contents — store a pointer)
+- memory_items         (durable, owner-approved memory entries)
+- tasks                (queued/background work items + status)
+- scheduled_jobs        (reminders/recurring jobs: schedule, payload,
+                         next_run, status)
+- audit_events         (security-sensitive actions: who/what/when)
+Write the RLS policy set for every table above as part of this
+migration, and write a test (or checklist) that proves a request
+without the owner's JWT is denied on each one.
+
+2.3 Storage
+- Use Supabase Storage buckets for uploaded and generated files.
+- Bucket access policies must also be scoped to the single owner.
+
+2.4 Server-side API layer (Vercel functions)
+Implement these backend endpoints/functions (names indicative —
+match existing route conventions if already established):
+- POST /api/chat            — send a message, run it through the AI
+                               router, stream the response, persist to
+                               `messages`/`conversations`
+- GET  /api/conversations    — list/retrieve conversation history
+- POST /api/router/route     — internal: classify task type, select
+                               provider/model, apply fallback
+- POST /api/providers/health — check provider availability/latency
+- POST /api/files/upload     — upload to Supabase Storage, record in
+                               `documents`
+- GET  /api/files/:id        — retrieve file metadata/content pointer
+- POST /api/memory           — create/update a memory item (owner
+                               confirmation required for anything
+                               sensitive)
+- POST /api/schedule         — create/update a reminder or recurring
+                               job in `scheduled_jobs`
+- GET  /api/schedule/due     — return due jobs (used by a scheduled
+                               function/cron)
+- POST /api/google/oauth/start & /callback — Google OAuth 2.0 flow;
+                               store only server-side, never expose
+                               tokens to the client
+- POST /api/google/drive/list, /read, /upload — Drive operations,
+                               scoped by `drive_sources` nickname and
+                               current granted permission level
+- POST /api/google/calendar/list, /create      — Calendar operations
+                               (read first; write only after the
+                               Workspace roadmap stage allows it)
+- POST /api/google/gmail/search, /read         — Gmail read access
+                               (only once that roadmap stage is
+                               reached)
+All of the above must check the Supabase session before doing
+anything, log the action to `audit_events` when it is
+security-relevant, and never leak provider keys or OAuth tokens in
+their responses.
+
+--------------------------------------------------------------------
+3. AI ROUTER & PROVIDER ADAPTERS
+--------------------------------------------------------------------
+- Implement a provider-adapter interface: sendMessage(), streamMessage(),
+  analyzeFile(), supportsVision(), supportsTools(), getCapabilities(),
+  healthCheck(), estimateUsage(). Every provider must implement this
+  same shape so the router never contains provider-specific branching
+  outside the adapters themselves.
+- Wire up two adapters first: NVIDIA NIM (reasoning/function-calling
+  tasks) and DeepSeek (cheap general chat). Leave clearly marked
+  extension points for Gemini/Claude/OpenAI/local models later.
+- Router logic: classify the incoming task (simple rewrite, general
+  chat, action/function-call, coding, long document, vision), pick the
+  preferred provider per Section 7 of the project blueprint, and fall
+  back to a healthy alternative on timeout, rate limit, or invalid key
+  — logging every fallback to `provider_usage`.
+- Never let a provider failure crash the request; always return a
+  clear, honest error state if no provider is available.
+
+--------------------------------------------------------------------
+4. KNOWLEDGE RETRIEVAL (RAG) — BACKEND PIPELINE
+--------------------------------------------------------------------
+1. Authorize a Drive connection (OAuth), store under a nickname in
+   `drive_sources`.
+2. Index permitted file metadata into `documents`.
+3. Extract supported text server-side.
+4. Chunk content and store searchable representations (embeddings or
+   equivalent) with a reference back to `documents`.
+5. On a query, retrieve only relevant chunks, pass them to the chosen
+   model, and return the answer with the originating source cited.
+6. If retrieval finds nothing relevant, the backend must say so
+   explicitly rather than letting the model guess.
+
+--------------------------------------------------------------------
+5. SCHEDULER / MEMORY / TASKS (BACKEND BEHAVIOR)
+--------------------------------------------------------------------
+- Reminders and recurring jobs are rows in `scheduled_jobs`; a
+  scheduled Vercel function (cron) checks `/api/schedule/due` and
+  triggers notifications/actions.
+- Memory items are only written to `memory_items` with an explicit
+  owner-approved step — never silently inferred and stored.
+- Background/queued work (e.g. indexing a newly connected Drive) goes
+  through `tasks` with a status field the frontend can poll.
+
+--------------------------------------------------------------------
+6. SECURITY CHECKLIST (VERIFY BEFORE MARKING ANY PHASE DONE)
+--------------------------------------------------------------------
+[ ] No Firebase references remain anywhere in the codebase.
+[ ] All AI provider keys are server-side environment variables only.
+[ ] Google OAuth client secret and refresh tokens never reach the
+    client bundle.
+[ ] Every Supabase table reachable by the client has RLS enabled and
+    tested (deny-by-default, allow only owner's uid()).
+[ ] Supabase service-role key is used only in trusted server
+    contexts, never in any code shipped to the browser.
+[ ] Rate limiting exists on backend endpoints.
+[ ] Destructive/consequential actions require confirmation before
+    execution.
+[ ] Security-relevant actions are written to `audit_events`.
+
+--------------------------------------------------------------------
+7. FRONTEND CONTRACT (FUNCTIONAL ONLY — NOT APPEARANCE)
+--------------------------------------------------------------------
+The frontend must be able to do the following. Do NOT design its
+look, layout, colors, branding, or component style from this file —
+only ensure these capabilities are wired to the backend above:
+- Authenticate the single owner and keep the session alive.
+- Send/receive chat messages with streaming output.
+- List and reopen past conversations.
+- Upload a file and see its processed/indexed status.
+- View and manage connected accounts (Google, Mega, etc.) and their
+  granted permission level.
+- Trigger a Drive/Calendar/Gmail action and see an explicit
+  success/failure result (never a silent assumption of success).
+- Create/view/cancel reminders and scheduled jobs.
+- View and edit stored memory items.
+- See which AI provider/model handled a given response and its
+  status (for transparency/debugging).
+
+--------------------------------------------------------------------
+8. WORK ORDER — DO THESE IN THIS ORDER
+--------------------------------------------------------------------
+1. Run the audit in Section 1 and report findings.
+2. Remove any Firebase dependency; stand up the Supabase project
+   schema from Section 2.2 with RLS policies and tests.
+3. Migrate Auth to Supabase Auth (Section 2.1).
+4. Migrate file storage to Supabase Storage (Section 2.3).
+5. Rebuild/confirm the server-side API routes in Section 2.4 against
+   Supabase, verifying the session check and audit logging on each.
+6. Implement or confirm the provider-adapter interface and wire up
+   NVIDIA NIM + DeepSeek with router/fallback logic (Section 3).
+7. Implement or confirm the RAG pipeline (Section 4) against
+   Supabase-stored documents.
+8. Implement scheduler/memory/task backend behavior (Section 5).
+9. Re-run the full Security Checklist (Section 6) and fix any unchecked
+   item before continuing.
+10. Confirm the frontend can call every capability in Section 7; do
+    not touch its visual design.
+11. Report back: what changed, what is now backend-complete on
+    Supabase, and what remains before the next roadmap phase.
+
+====================================================================
+END OF WORK ORDER
+====================================================================

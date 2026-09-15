@@ -1,0 +1,1289 @@
+NAD JARVIS
+Personal AI Assistant — Master Development Specification & Implementation Prompt
+________________________________________
+IMPORTANT INSTRUCTION TO GOOGLE ANTIGRAVITY
+You are the primary development agent responsible for designing, implementing, integrating, testing, debugging, and refining NAD JARVIS, a private personal AI assistant.
+Do not merely explain how to build the application.
+Build the application.
+You must inspect the existing project structure before making changes, understand the current implementation, preserve working functionality, and progressively implement the requirements described in this specification.
+When a requirement is technically ambiguous, choose a robust, maintainable, production-ready implementation rather than creating a superficial mockup.
+Do not replace functional systems unnecessarily.
+Do not create fake functionality where a real implementation is technically possible.
+Every major feature should be connected to the appropriate backend, database, API, authentication, storage, or AI service.
+The final application should feel like a real personal AI operating system rather than a simple chatbot interface.
+________________________________________
+1. PROJECT IDENTITY
+Name
+NAD JARVIS
+Description
+NAD JARVIS is a private, voice-first personal AI assistant designed exclusively for one user.
+It is inspired by the concept of J.A.R.V.I.S. from the Marvel universe, but it must be implemented as an original product with its own visual identity, architecture, interface, and functionality.
+JARVIS should function as a personal digital companion capable of:
+•	Natural conversation
+•	Reasoning
+•	Planning
+•	Scheduling
+•	Reminders
+•	Voice interaction
+•	Personal memory
+•	Personal knowledge management
+•	Document understanding
+•	File management
+•	Calendar management
+•	Notifications
+•	Web research
+•	AI-powered task execution
+•	Multi-step workflows
+•	Personal productivity assistance
+The application is intended to be private and personalized to a single user.
+________________________________________
+2. CORE DESIGN PHILOSOPHY
+Do not build NAD JARVIS as:
+"A chatbot with a dashboard."
+Build it as:
+"A personal AI operating system with an AI brain, persistent memory, a knowledge library, modular skills, secure integrations, and an action orchestration layer."
+The architecture should separate:
+1.	AI reasoning
+2.	Memory
+3.	Knowledge
+4.	Skills/tools
+5.	Integrations
+6.	Permissions
+7.	Data storage
+8.	User interface
+9.	Voice interaction
+10.	Task execution
+The AI model itself should not be tightly coupled to the application's core business logic.
+This allows the underlying AI provider to be changed in the future without rebuilding the entire application.
+________________________________________
+3. PRIMARY USER
+NAD JARVIS is designed primarily for one authenticated user.
+The system should therefore prioritize:
+•	Personalization
+•	Privacy
+•	Long-term memory
+•	Personal knowledge
+•	Personal projects
+•	Personal files
+•	Personal workflows
+•	Secure authentication
+•	Fine-grained permissions
+Do not build unnecessary multi-tenant complexity unless the architecture requires it.
+However, structure the database and security rules cleanly enough that expansion to multiple users could be possible later.
+________________________________________
+4. AI BRAIN
+NAD JARVIS should support an AI orchestration architecture rather than hard-coding all functionality into a single model.
+The original architecture specifies:
+Gemini
+Use Gemini for:
+•	Complex reasoning
+•	Structured tasks
+•	Function/tool calling
+•	Multi-step planning
+•	Action execution
+•	Scheduling
+•	Tool selection
+•	Knowledge retrieval orchestration
+•	Complex document-related reasoning
+DeepSeek
+Use DeepSeek where appropriate for:
+•	General conversation
+•	Casual questions
+•	Explanations
+•	Brainstorming
+•	Creative text generation
+•	Cost-efficient conversational workloads
+Do not assume that every request must go to the same model.
+Create a central AI orchestration layer that determines which model and tools are appropriate for each request.
+________________________________________
+5. AI ORCHESTRATOR
+Create a central JARVIS Orchestrator.
+Its responsibility is to determine:
+1.	What does the user want?
+2.	Is this a conversational request?
+3.	Does it require memory?
+4.	Does it require knowledge retrieval?
+5.	Does it require a skill/tool?
+6.	Which skill should be executed?
+7.	Does the action require confirmation?
+8.	Which AI model should process the request?
+9.	Does the task require multiple steps?
+10.	What information should be returned to the user?
+11.	Should the result be stored in memory?
+Conceptually:
+USER
+  ↓
+VOICE / TEXT
+  ↓
+JARVIS ORCHESTRATOR
+  ↓
+┌───────────────┬────────────────┬────────────────┐
+│               │                │
+AI BRAIN      MEMORY         KNOWLEDGE
+│               │                │
+│               │                │
+└───────────────┴────────────────┘
+                ↓
+          SKILL ROUTER
+                ↓
+        TOOL / API EXECUTION
+                ↓
+             RESULT
+                ↓
+          AI RESPONSE
+                ↓
+        MEMORY / HISTORY
+________________________________________
+6. PERSONAL KNOWLEDGE LIBRARY
+This is a major core feature of NAD JARVIS.
+JARVIS must have a persistent Knowledge Library where the user can provide documents and other knowledge sources for future use.
+The user should be able to tell JARVIS:
+"Learn this document."
+JARVIS must then process the document and make its information available for future retrieval.
+IMPORTANT:
+Do NOT interpret "learn" as retraining or fine-tuning the AI model every time a document is uploaded.
+Instead, implement a persistent document knowledge architecture based on:
+Document Storage + Metadata + Text Extraction + Chunking + Retrieval
+________________________________________
+7. FIREBASE STORAGE — ORIGINAL KNOWLEDGE FILES
+Use Firebase Storage to store the actual uploaded knowledge documents.
+Firebase Storage is the physical document repository.
+Example:
+knowledge/
+│
+├── filmmaking/
+│   ├── celtx-screenwriting-handbook.pdf
+│   ├── cinematography-guide.pdf
+│   └── lighting-manual.pdf
+│
+├── engineering/
+│   ├── mechanical-engineering-notes.pdf
+│   └── final-year-project.pdf
+│
+├── programming/
+│   ├── html-handbook.pdf
+│   ├── css-guide.pdf
+│   └── javascript-book.pdf
+│
+└── business/
+    ├── seo-guide.pdf
+    └── marketing-handbook.pdf
+The original uploaded file must remain available in Firebase Storage.
+Do not store large binary documents directly inside Firestore.
+________________________________________
+8. FIRESTORE — KNOWLEDGE DATABASE
+Use Firestore as the structured knowledge management layer.
+Firestore should contain metadata and information necessary to manage and retrieve documents.
+A knowledge document record should contain information such as:
+{
+  id: "documentId",
+
+  name: "Celtx Screenwriting Handbook",
+
+  fileName: "celtx-screenwriting-handbook.pdf",
+
+  storagePath:
+    "knowledge/filmmaking/celtx-screenwriting-handbook.pdf",
+
+  downloadUrl: "...",
+
+  mimeType: "application/pdf",
+
+  category: "Filmmaking",
+
+  projectId: "nad-production",
+
+  description: "...",
+
+  uploadedAt: "...",
+
+  updatedAt: "...",
+
+  processingStatus: "completed",
+
+  pageCount: 84,
+
+  fileSize: 12345678,
+
+  ownerId: "...",
+
+  isEnabled: true
+}
+The exact schema may be improved by the implementation agent where appropriate.
+________________________________________
+9. KNOWLEDGE DOCUMENT PROCESSING
+When a document is uploaded:
+USER UPLOADS DOCUMENT
+        ↓
+FIREBASE STORAGE
+        ↓
+DOCUMENT PROCESSOR
+        ↓
+FILE TYPE DETECTION
+        ↓
+TEXT EXTRACTION
+        ↓
+STRUCTURAL ANALYSIS
+        ↓
+CHUNKING
+        ↓
+SEARCHABLE KNOWLEDGE
+        ↓
+FIRESTORE METADATA
+        ↓
+READY FOR JARVIS
+Support appropriate document formats such as:
+•	PDF
+•	DOC
+•	DOCX
+•	TXT
+•	Markdown
+•	PPT/PPTX
+•	XLS/XLSX where technically appropriate
+•	Images through OCR where implemented
+•	Other formats where reliable extraction is available
+The implementation should gracefully reject unsupported formats.
+________________________________________
+10. DOCUMENT CHUNKING
+Large documents must not be sent to the AI model in their entirety for every question.
+Extract the document into meaningful sections/chunks.
+Each chunk should preserve useful metadata such as:
+{
+  documentId: "...",
+
+  text: "...",
+
+  pageNumber: 42,
+
+  sectionTitle: "Scene Headings",
+
+  chunkIndex: 17,
+
+  tokenCount: 450
+}
+Chunking should attempt to preserve semantic boundaries instead of blindly splitting text at arbitrary character counts.
+________________________________________
+11. KNOWLEDGE RETRIEVAL / RAG
+Implement a retrieval architecture so JARVIS can answer questions using the user's stored documents.
+Example:
+User:
+"What does my screenwriting handbook say about scene headings?"
+Processing:
+USER QUESTION
+      ↓
+QUERY ANALYSIS
+      ↓
+KNOWLEDGE SEARCH
+      ↓
+RELEVANT DOCUMENT CHUNKS
+      ↓
+CONTEXT ASSEMBLY
+      ↓
+AI MODEL
+      ↓
+ANSWER
+JARVIS should retrieve only the relevant portions of the user's documents.
+Do not unnecessarily send entire books or large documents to the AI.
+Where technically appropriate, use vector/semantic search or another reliable retrieval mechanism.
+If a vector-search service is introduced, keep it modular so the application can change providers later.
+________________________________________
+12. SOURCE CITATIONS
+Whenever JARVIS answers a question using stored knowledge, it should be capable of identifying the source.
+For example:
+According to your Celtx Screenwriting Handbook,
+scene headings identify the location and time of a scene.
+
+Source:
+Celtx Screenwriting Handbook
+Page 42
+The user should be able to select:
+"View Source"
+and JARVIS should open or display the relevant document section where technically possible.
+This is important for trust and verification.
+________________________________________
+13. KNOWLEDGE VS MEMORY
+Do not treat personal memory and document knowledge as the same system.
+PERSONAL MEMORY
+Memory contains information about the user.
+Examples:
+User prefers black and gold website designs.
+
+User prefers voice interaction.
+
+User is working on a project called X.
+
+User prefers a particular workflow.
+Memory capabilities:
+memory.save()
+memory.search()
+memory.update()
+memory.delete()
+KNOWLEDGE
+Knowledge contains information obtained from documents and approved knowledge sources.
+Examples:
+HTML handbook
+Mechanical Engineering textbook
+Celtx handbook
+Production manual
+Business guide
+Project documentation
+Knowledge capabilities:
+knowledge.upload()
+knowledge.process()
+knowledge.search()
+knowledge.retrieve()
+knowledge.list()
+knowledge.delete()
+knowledge.update()
+Keep these systems logically separate.
+________________________________________
+14. KNOWLEDGE ORGANIZATION
+The Knowledge Library must support categories and projects.
+Example:
+KNOWLEDGE
+│
+├── FILMMAKING
+│   ├── Screenwriting
+│   ├── Cinematography
+│   ├── Lighting
+│   ├── Editing
+│   └── AI Filmmaking
+│
+├── ENGINEERING
+│   ├── Mechanical Engineering
+│   ├── Robotics
+│   ├── MATLAB
+│   └── Final Year Project
+│
+├── PROGRAMMING
+│   ├── HTML
+│   ├── CSS
+│   ├── JavaScript
+│   ├── React
+│   └── Firebase
+│
+└── BUSINESS
+    ├── SEO
+    ├── Marketing
+    └── Entrepreneurship
+Allow documents to belong to:
+•	Global Knowledge
+•	Personal Knowledge
+•	Project Knowledge
+•	Category-specific Knowledge
+________________________________________
+15. KNOWLEDGE SCOPES
+Implement knowledge scopes.
+Global
+Available throughout JARVIS.
+Personal
+Available to the authenticated user.
+Project
+Available only when working with that project.
+Category
+Available to related tasks.
+For example:
+Project:
+NAD PRODUCTION
+
+Knowledge:
+Celtx Handbook
+Production Manual
+Lighting Guide
+Camera Guide
+When the user asks:
+"How should we format this screenplay?"
+JARVIS should be able to use the relevant filmmaking knowledge.
+________________________________________
+16. KNOWLEDGE LIBRARY USER INTERFACE
+Create a dedicated Knowledge Library interface.
+It should allow the user to:
+•	Upload documents
+•	Drag and drop files
+•	Create categories
+•	Create projects
+•	Search knowledge
+•	View documents
+•	Preview documents
+•	Delete documents
+•	Rename documents
+•	View processing status
+•	View file metadata
+•	Enable/disable documents
+•	Ask JARVIS about a document
+•	See which project/category owns a document
+Example interface:
+┌──────────────────────────────────────────────┐
+│              JARVIS KNOWLEDGE                │
+├──────────────────────────────────────────────┤
+│                                              │
+│  Search your knowledge...          + Upload  │
+│                                              │
+│  FILMMAKING                                  │
+│  ├── Celtx Screenwriting Handbook           │
+│  ├── Cinematography Guide                   │
+│  └── Lighting Manual                        │
+│                                              │
+│  ENGINEERING                                 │
+│  ├── Mechanical Engineering Notes           │
+│  └── Final Year Project                     │
+│                                              │
+└──────────────────────────────────────────────┘
+________________________________________
+17. "LEARN THIS" COMMAND
+Implement a natural language workflow.
+User:
+"Jarvis, learn this document."
+JARVIS should:
+1.	Identify the selected document.
+2.	Upload it if necessary.
+3.	Store it in Firebase Storage.
+4.	Create a Firestore knowledge record.
+5.	Extract its contents.
+6.	Process and chunk the content.
+7.	Make the knowledge searchable.
+8.	Mark the document as processed.
+9.	Confirm completion.
+Example response:
+"I've added the document to your Knowledge Library. I can now use its information when answering future questions."
+Do not claim that the AI model was retrained.
+________________________________________
+18. KNOWLEDGE-AWARE CONVERSATIONS
+JARVIS should automatically determine when stored knowledge may be relevant.
+Example:
+User:
+"Explain three-point lighting according to what I've taught you."
+JARVIS should search the Knowledge Library before answering.
+Another example:
+"According to my engineering project documents, what motor torque did we calculate?"
+JARVIS should search the relevant project knowledge.
+If no relevant knowledge is found, JARVIS should not fabricate an answer.
+It should say that the information was not found in the user's stored knowledge and, where appropriate, offer to use general AI knowledge or web research.
+________________________________________
+19. FILE MANAGEMENT
+The original application includes integration with external file services such as:
+•	Google Drive
+•	Mega
+Preserve these capabilities.
+These services should remain separate from the NAD JARVIS Knowledge Library.
+External files may be browsed and managed through their respective APIs.
+The user may optionally import a document from Google Drive or another connected service into the Knowledge Library.
+Example:
+Google Drive
+     ↓
+Select Document
+     ↓
+"Add to JARVIS Knowledge"
+     ↓
+Firebase Storage
+     ↓
+Knowledge Processing
+Do not automatically copy every external file into the Knowledge Library.
+Only import files when explicitly requested or configured.
+________________________________________
+20. SKILL SYSTEM
+JARVIS must have a modular skill/tool architecture.
+The AI should not directly manipulate application internals.
+Instead, expose controlled skills.
+Example:
+calendar.create_event
+calendar.find_events
+calendar.update_event
+calendar.delete_event
+
+reminders.create
+reminders.list
+reminders.delete
+
+memory.save
+memory.search
+
+knowledge.upload
+knowledge.search
+knowledge.retrieve
+
+files.search
+files.read
+files.download
+
+web.search
+
+notifications.create
+The exact list should expand as features are implemented.
+Each skill should have:
+•	Name
+•	Description
+•	Parameters
+•	Execution function
+•	Permission level
+•	Confirmation requirement
+•	Error handling
+•	Logging
+________________________________________
+21. SKILL PERMISSIONS
+Not every skill should execute automatically.
+Low-risk
+Examples:
+•	Search knowledge
+•	Search files
+•	Read documents
+•	Search web
+•	Create drafts
+•	Create reminders
+Medium-risk
+Examples:
+•	Create calendar events
+•	Modify existing data
+•	Import external files
+High-risk
+Examples:
+•	Send emails
+•	Delete files
+•	Delete calendar events
+•	Financial actions
+•	Sensitive account modifications
+High-risk operations should require explicit user confirmation.
+Example:
+"I have prepared the email. Would you like me to send it?"
+Do not silently perform irreversible or sensitive actions.
+________________________________________
+22. SCHEDULING AND REMINDERS
+Preserve the original scheduling architecture.
+JARVIS must support natural language commands such as:
+"Schedule a meeting with Sarah for Friday at 3 PM."
+"Show me what I have tomorrow."
+"Remind me to call Sarah at 10 AM."
+"Set an alarm for 6 AM."
+Use:
+•	Google Calendar API where appropriate
+•	Firestore for application reminders
+•	Firebase Cloud Functions for backend processing
+•	Push notifications for alerts
+________________________________________
+23. VOICE INTERACTION
+NAD JARVIS must remain voice-first.
+Support:
+Speech-to-Text
+Web:
+•	Web Speech API or appropriate speech service
+Android:
+•	Android SpeechRecognizer or appropriate speech service
+Text-to-Speech
+Web:
+•	Browser SpeechSynthesis or appropriate TTS service
+Android:
+•	Android TextToSpeech or appropriate TTS service
+Wake Word
+Support a configurable activation phrase such as:
+"Hey Jarvis"
+or:
+"NAD"
+Wake-word functionality must respect browser/mobile platform limitations and battery/privacy constraints.
+Do not falsely claim continuous wake-word functionality where the platform does not permit it.
+________________________________________
+24. TEXT + VOICE HYBRID MODE
+The user must be able to switch naturally between:
+•	Text
+•	Voice
+Example:
+Voice:
+"Jarvis, check my calendar."
+
+↓
+JARVIS responds verbally.
+
+User then types:
+
+"Actually, show me the schedule."
+
+↓
+JARVIS responds visually.
+Conversation context must remain continuous between modes.
+________________________________________
+25. CONVERSATION HISTORY
+Store conversation history securely in Firestore.
+Conversation records should support:
+•	Sessions
+•	Messages
+•	Timestamps
+•	User/assistant roles
+•	Tool calls
+•	Tool results
+•	Knowledge sources
+•	Model used
+•	Errors
+•	Conversation titles
+Avoid storing unnecessary sensitive information.
+________________________________________
+26. REAL-TIME DATABASE
+Firebase Realtime Database should NOT be used as the primary knowledge database.
+Use Firestore for persistent application data and knowledge metadata.
+Realtime Database may be used where genuinely beneficial for:
+•	Presence
+•	Live session state
+•	Real-time status
+•	Streaming state
+•	Temporary real-time synchronization
+Do not duplicate persistent knowledge unnecessarily between Firestore and Realtime Database.
+________________________________________
+27. FIREBASE ARCHITECTURE
+Use:
+Firebase Authentication
+For secure user authentication.
+Firestore
+For:
+•	Conversations
+•	Messages
+•	Reminders
+•	User preferences
+•	Memory
+•	Knowledge metadata
+•	Knowledge chunks
+•	Projects
+•	Skills
+•	Permissions
+•	Logs
+•	Application settings
+Firebase Storage
+For:
+•	Knowledge documents
+•	Uploaded files
+•	User assets
+•	Application files
+Firebase Cloud Functions
+For:
+•	AI API calls
+•	Tool orchestration
+•	Secure backend operations
+•	Document processing
+•	Notifications
+•	External API integration
+•	Scheduled jobs
+•	Knowledge processing pipelines
+________________________________________
+28. SECURITY
+NAD JARVIS is private.
+Implement strong security.
+Requirements:
+•	Firebase Authentication
+•	Firestore security rules
+•	Storage security rules
+•	Server-side API calls
+•	Secure environment variables
+•	No API keys in frontend source code
+•	HTTPS
+•	Authenticated Cloud Function requests
+•	User ownership validation
+•	Secure file access
+•	Permission-aware knowledge retrieval
+Never expose:
+GEMINI_API_KEY
+DEEPSEEK_API_KEY
+GOOGLE_CLIENT_SECRET
+MEGA_PASSWORD
+in frontend code.
+All sensitive credentials must remain server-side.
+________________________________________
+29. KNOWLEDGE SECURITY
+Knowledge retrieval must respect ownership and scope.
+JARVIS must never retrieve a document merely because it matches a search query.
+Before retrieval:
+Authenticate user
+       ↓
+Verify document ownership
+       ↓
+Verify project/category permissions
+       ↓
+Retrieve allowed knowledge
+       ↓
+Send relevant context to AI
+The knowledge system must never expose another user's data if the architecture is later expanded.
+________________________________________
+30. CLOUD FUNCTIONS — CENTRAL HUB
+Use Firebase Cloud Functions as the secure backend orchestration hub.
+Conceptually:
+exports.processCommand = ...
+The backend should determine whether a request requires:
+General AI
+Knowledge
+Memory
+Calendar
+Reminder
+File operation
+Web search
+Notification
+Other skill
+Do not create one enormous function containing every operation.
+Organize backend functionality into maintainable modules.
+Example:
+functions/
+│
+├── ai/
+├── knowledge/
+├── memory/
+├── calendar/
+├── reminders/
+├── files/
+├── notifications/
+├── integrations/
+├── skills/
+└── orchestrator/
+________________________________________
+31. KNOWLEDGE PROCESSING BACKEND
+Create a dedicated knowledge-processing pipeline.
+Example:
+knowledge/
+├── upload
+├── extractText
+├── parseDocument
+├── chunkDocument
+├── indexDocument
+├── searchKnowledge
+├── retrieveContext
+├── deleteKnowledge
+└── updateKnowledge
+Processing should happen securely on the backend.
+Do not rely on the browser to perform the complete knowledge ingestion pipeline.
+________________________________________
+32. ERROR HANDLING
+Every major system must have graceful error handling.
+Examples:
+AI unavailable
+"I'm temporarily unable to reach my AI service."
+Document processing failed
+"I couldn't process this document. Please check the file format and try again."
+Calendar unavailable
+"I couldn't access your Google Calendar."
+Knowledge not found
+"I couldn't find that information in your Knowledge Library."
+Never fabricate successful operations.
+________________________________________
+33. USER EXPERIENCE
+NAD JARVIS should feel:
+•	Premium
+•	Futuristic
+•	Intelligent
+•	Minimal
+•	Personal
+•	Responsive
+•	Fast
+•	Voice-first
+Avoid creating an overly complicated interface.
+The user should be able to open JARVIS and immediately:
+Speak → Ask → Receive → Act.
+________________________________________
+34. PRIMARY INTERFACE
+The home screen should emphasize JARVIS's presence and voice interaction.
+Include:
+•	Central JARVIS visual/AI orb
+•	Voice activation
+•	Current conversation
+•	Quick actions
+•	Notifications
+•	Calendar summary
+•	Reminders
+•	Knowledge access
+•	Recent activity
+The interface should support responsive layouts for:
+•	Desktop
+•	Tablet
+•	Mobile
+________________________________________
+35. KNOWLEDGE LIBRARY SCREEN
+Create a dedicated Knowledge Library page.
+Recommended sections:
+Knowledge
+│
+├── All Documents
+├── Recently Added
+├── Categories
+├── Projects
+├── Processing
+└── Search
+Each document card should show:
+•	File icon
+•	Name
+•	Type
+•	Category
+•	Project
+•	Date added
+•	Processing state
+•	File size
+•	Actions
+Actions:
+Open
+Ask JARVIS
+Search within
+Rename
+Move
+Disable
+Delete
+________________________________________
+36. SAMPLE KNOWLEDGE INTERACTION
+User uploads:
+Celtx Screenwriting Handbook.pdf
+JARVIS:
+Document uploaded.
+
+Processing:
+████████████████████ 100%
+
+Knowledge extraction complete.
+
+Added to:
+Filmmaking → Screenwriting
+
+84 pages indexed.
+
+You can now ask me questions about this document.
+Then:
+User:
+"What does the handbook say about scene headings?"
+JARVIS:
+"According to your Celtx Screenwriting Handbook, scene headings identify the location and time of the scene."
+Then:
+Source:
+Celtx Screenwriting Handbook
+Page 42
+________________________________________
+37. SAMPLE PERSONAL KNOWLEDGE WORKFLOW
+User:
+"JARVIS, learn this PDF."
+JARVIS:
+Uploading...
+Processing...
+Extracting text...
+Indexing...
+Creating searchable knowledge...
+
+Done.
+
+I've added the document to your Knowledge Library.
+Later:
+"JARVIS, what did I teach you about lighting?"
+JARVIS searches the user's stored knowledge.
+________________________________________
+38. SAMPLE MULTI-SKILL WORKFLOW
+User:
+"JARVIS, prepare me for tomorrow."
+JARVIS may:
+calendar.find_events
+        ↓
+reminders.list
+        ↓
+tasks.list
+        ↓
+knowledge.search
+        ↓
+memory.search
+        ↓
+AI reasoning
+        ↓
+Personal briefing
+Response:
+"Tomorrow you have two meetings, one unfinished task, and a production deadline. I've also found the relevant production notes in your Knowledge Library."
+This is the desired direction for JARVIS's agentic capabilities.
+________________________________________
+39. GOOGLE DRIVE AND MEGA
+Preserve external file integrations from the original specification.
+Google Drive
+Support:
+•	Browse
+•	Search
+•	Read
+•	Download
+•	Upload
+•	Import into Knowledge Library
+Mega
+Support:
+•	Browse
+•	Search where API supports it
+•	Read/download where supported
+•	Upload where supported
+•	Import into Knowledge Library where supported
+External storage is NOT the primary Knowledge Library.
+The primary Knowledge Library remains:
+Firebase Storage + Firestore
+________________________________________
+40. GOOGLE CALENDAR
+Preserve Google Calendar integration.
+Support:
+•	List events
+•	Create events
+•	Update events
+•	Delete events
+•	Check availability
+•	Calendar synchronization
+Use secure OAuth.
+Do not expose OAuth secrets to the client.
+________________________________________
+41. NOTIFICATIONS
+Use Firebase Cloud Messaging or the appropriate notification infrastructure for:
+•	Reminders
+•	Calendar notifications
+•	JARVIS alerts
+•	Background events
+•	Processing completion
+•	Important task notifications
+________________________________________
+42. DATABASE CONCEPT
+Organize Firestore logically.
+A possible structure:
+users/
+  {userId}
+
+users/{userId}/conversations/
+users/{userId}/messages/
+users/{userId}/memories/
+users/{userId}/projects/
+users/{userId}/reminders/
+users/{userId}/knowledge/
+users/{userId}/skills/
+users/{userId}/notifications/
+Knowledge chunks may be structured as:
+users/{userId}/knowledge/{documentId}/chunks/{chunkId}
+or another architecture optimized for the selected retrieval implementation.
+Choose the structure that provides:
+•	Security
+•	Efficient querying
+•	Scalability
+•	Maintainability
+________________________________________
+43. LOGGING AND AUDIT
+For important actions, maintain an appropriate activity log.
+Example:
+User requested:
+"Schedule meeting with Sarah."
+
+JARVIS:
+calendar.create_event
+
+Result:
+Success
+
+Confirmation:
+Required / Granted
+Logs should help with:
+•	Debugging
+•	Security
+•	Troubleshooting
+•	User transparency
+Do not log secrets.
+________________________________________
+44. COST OPTIMIZATION
+Use AI models intelligently.
+Do not send every simple request to the most expensive model.
+Possible strategy:
+Simple conversation
+        ↓
+DeepSeek
+
+Complex reasoning
+        ↓
+Gemini
+
+Tool execution
+        ↓
+Gemini/tool-calling model
+
+Knowledge retrieval
+        ↓
+Search → Relevant chunks → Appropriate AI model
+The architecture must allow model routing to change later.
+________________________________________
+45. DEVELOPMENT PRINCIPLES
+Google Antigravity must:
+1.	Inspect before modifying.
+2.	Preserve working code.
+3.	Use reusable components.
+4.	Avoid duplicated logic.
+5.	Keep frontend and backend responsibilities separate.
+6.	Keep API secrets server-side.
+7.	Use environment variables.
+8.	Implement proper loading states.
+9.	Implement proper error states.
+10.	Validate user input.
+11.	Validate uploaded files.
+12.	Enforce Firebase security rules.
+13.	Test integrations.
+14.	Test mobile responsiveness.
+15.	Test voice interaction.
+16.	Test knowledge ingestion.
+17.	Test knowledge retrieval.
+18.	Test permission boundaries.
+________________________________________
+46. DO NOT FAKE FEATURES
+Do not create buttons that only display:
+"Coming Soon"
+when the functionality is expected to be implemented.
+Do not create simulated AI responses when the real API is configured.
+Do not pretend a document has been learned if processing failed.
+Do not claim a calendar event was created if the API request failed.
+Do not claim a file was uploaded if Storage rejected it.
+Every success message must correspond to a real successful operation.
+________________________________________
+47. IMPLEMENTATION PRIORITY
+Build in the following logical order.
+Phase 1 — Foundation
+•	Project architecture
+•	Firebase setup
+•	Authentication
+•	Firestore
+•	Firebase Storage
+•	Cloud Functions
+•	Environment configuration
+Phase 2 — AI
+•	AI orchestration
+•	Gemini integration
+•	DeepSeek integration
+•	Conversation system
+•	Function/tool calling
+Phase 3 — Memory
+•	Personal memory
+•	Memory search
+•	Memory management
+Phase 4 — Knowledge Library
+•	Upload
+•	Firebase Storage
+•	Firestore metadata
+•	Text extraction
+•	Chunking
+•	Search/retrieval
+•	Source references
+•	Knowledge UI
+Phase 5 — Skills
+•	Skill registry
+•	Tool calling
+•	Permissions
+•	Confirmation system
+•	Skill execution
+Phase 6 — Productivity
+•	Calendar
+•	Reminders
+•	Tasks
+•	Notifications
+Phase 7 — External Files
+•	Google Drive
+•	Mega
+•	Knowledge import
+Phase 8 — Voice
+•	Speech-to-text
+•	Text-to-speech
+•	Wake-word/activation
+•	Voice UI
+Phase 9 — Advanced Intelligence
+•	Multi-step workflows
+•	Agentic task execution
+•	Cross-skill orchestration
+•	Proactive assistance
+________________________________________
+48. DEFINITION OF DONE
+NAD JARVIS should not be considered complete merely because the interface looks finished.
+The implementation is complete when:
+AI
+•	JARVIS can have real conversations.
+•	AI requests reach the configured model.
+•	Tool/function calling works.
+Memory
+•	JARVIS can save and retrieve personal information.
+Knowledge
+•	User can upload documents.
+•	Documents are stored in Firebase Storage.
+•	Metadata is stored in Firestore.
+•	Documents are processed.
+•	Knowledge is searchable.
+•	JARVIS can answer questions using stored knowledge.
+•	Sources can be identified.
+Skills
+•	Skills are modular.
+•	Skills can be called by the AI.
+•	Permissions are enforced.
+•	Sensitive operations require confirmation.
+Productivity
+•	Calendar works.
+•	Reminders work.
+•	Notifications work.
+Files
+•	Google Drive works where configured.
+•	Mega works where configured.
+•	External documents can be imported into the Knowledge Library.
+Voice
+•	Speech recognition works.
+•	Text-to-speech works.
+•	Text and voice conversations share context.
+Security
+•	Authentication works.
+•	Firestore rules are enforced.
+•	Storage rules are enforced.
+•	API secrets are protected.
+•	Unauthorized users cannot access private data.
+________________________________________
+49. FINAL ARCHITECTURE
+The final conceptual architecture should be:
+                         NAD JARVIS
+                              │
+                    ┌─────────▼─────────┐
+                    │   USER INTERFACE  │
+                    │   Text + Voice    │
+                    └─────────┬─────────┘
+                              │
+                    ┌─────────▼─────────┐
+                    │ JARVIS ORCHESTRATOR│
+                    └─────────┬─────────┘
+                              │
+             ┌────────────────┼─────────────────┐
+             │                │                 │
+             ▼                ▼                 ▼
+          AI BRAIN          MEMORY          KNOWLEDGE
+             │                │                 │
+       Gemini/DeepSeek     Firestore      Storage + Firestore
+             │                                  │
+             │                           Document Processing
+             │                                  │
+             │                           Search / Retrieval
+             │                                  │
+             └────────────────┬─────────────────┘
+                              │
+                       ┌──────▼──────┐
+                       │ SKILL ROUTER│
+                       └──────┬──────┘
+                              │
+       ┌──────────────┬───────┼────────┬─────────────┐
+       │              │       │        │             │
+       ▼              ▼       ▼        ▼             ▼
+   Calendar       Reminders Files    Web Search   Notifications
+       │              │       │
+       ▼              ▼       ▼
+ Google Calendar   Firestore   Drive/Mega
+                              │
+                              ▼
+                         ACTION RESULT
+                              │
+                              ▼
+                        JARVIS RESPONSE
+                              │
+                              ▼
+                       MEMORY / HISTORY
+________________________________________
+50. THE VISION
+The ultimate goal is for NAD JARVIS to become an assistant that does not merely answer questions.
+It should understand:
+Who the user is.
+What the user knows.
+What the user is working on.
+What the user's documents contain.
+What the user's schedule looks like.
+What tasks need to be completed.
+What tools it is allowed to use.
+What actions require confirmation.
+And most importantly:
+JARVIS should be able to use the knowledge the user deliberately gives it in future conversations without requiring the user to upload or explain the same document again.
+The user should be able to continuously build a personal digital Knowledge Library.
+The AI model provides the intelligence.
+Firebase Storage holds the original knowledge.
+Firestore organizes the knowledge.
+The retrieval system finds relevant information.
+The Skill System gives JARVIS capabilities.
+The Orchestrator connects everything.
+Together, these components form NAD JARVIS — a persistent, private, personal AI operating system.
+________________________________________
+NAD JARVIS must support multiple connected cloud-storage accounts.
+
+Each connection must have:
+
+- Unique connection ID
+- Provider
+- User-defined nickname
+- Account email/identifier
+- OAuth credentials/token reference
+- Connection status
+- Default status
+- Created date
+- Last synchronization date
+
+The user must be able to:
+
+- Connect a new drive
+- Give it a nickname
+- Rename the nickname
+- Disconnect the drive
+- Set a default drive
+- View connected accounts
+- Search a specific drive
+- Search multiple drives
+- Upload to a specific drive
+- Download from a specific drive
+- Move files between supported storage services where technically possible
+- Copy files between supported storage services where technically possible
+
+The AI must resolve natural-language references to drive nicknames and aliases.
+
+Example:
+
+User:
+"Upload this to NAD Production."
+
+JARVIS:
+Resolve "NAD Production"
+→ Google Drive connection
+→ Locate requested folder
+→ Upload file
+→ Verify successful upload
+→ Return confirmation.
+
+Never expose OAuth access tokens or client secrets to the frontend.
+FINAL INSTRUCTION TO GOOGLE ANTIGRAVITY
+Begin by inspecting the existing NAD JARVIS project.
+Do not immediately overwrite existing files.
+Identify:
+•	Current frontend architecture
+•	Current Firebase configuration
+•	Existing Firestore collections
+•	Existing Cloud Functions
+•	Existing authentication
+•	Existing AI integrations
+•	Existing voice functionality
+•	Existing file-management functionality
+•	Existing UI components
+Then create an implementation plan based on the architecture above.
+Implement the system incrementally.
+After every major implementation stage:
+1.	Run the application.
+2.	Check for build errors.
+3.	Check for runtime errors.
+4.	Check Firebase integration.
+5.	Test the feature.
+6.	Fix discovered issues.
+7.	Continue to the next stage.
+The end result must be a functional NAD JARVIS application, not a prototype that only visually represents the requested features.
+Prioritize correctness, security, maintainability, real integrations, modular architecture, and a premium user experience.
+Build NAD JARVIS.
+
+The fundamental decision-making hierarchy becomes:
+                    USER
+                      ↓
+                 NAD JARVIS
+                      ↓
+              What does this need?
+                      ↓
+        ┌─────────────┼──────────────┐
+        ↓             ↓              ↓
+   FILE/DRIVE      KNOWLEDGE       SKILL
+   OPERATION       SEARCH          /TOOL
+        │             │              │
+        ↓             ↓              ↓
+    Execute       Can answer?     Execute
+    directly       /       \
+                  YES       NO
+                   ↓         ↓
+                Answer    AI ROUTER
+                              ↓
+                  ┌───────────┼───────────┐
+                  ↓           ↓           ↓
+                Deep        Gem         Chat
+                  ↓           ↓           ↓
+                  └───────────┼───────────┘
+                              ↓
+                         Final Answer
+
+
