@@ -1,16 +1,39 @@
-{
+﻿{
   "version": 2,
   "buildCommand": "echo 'Building NAD JARVIS'",
   "outputDirectory": "public",
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
+  "functions": {
+    "api/chat.js":          { "maxDuration": 30 },
+    "api/conversations.js": { "maxDuration": 10 },
+    "api/memory.js":        { "maxDuration": 10 },
+    "api/auth.js":          { "maxDuration": 15 },
+    "api/files.js":         { "maxDuration": 30 },
+    "api/schedule.js":      { "maxDuration": 10 },
+    "api/tasks.js":         { "maxDuration": 10 },
+    "api/providers.js":     { "maxDuration": 15 },
+    "api/google/oauth.js":      { "maxDuration": 15 },
+    "api/google/workspace.js":  { "maxDuration": 15 }
+  },
+  "rewrites": [
+    { "source": "/api/auth/login",                    "destination": "/api/auth" },
+    { "source": "/api/auth/session",                  "destination": "/api/auth?action=session" },
+    { "source": "/api/files/upload",                  "destination": "/api/files" },
+    { "source": "/api/files/:id",                     "destination": "/api/files?id=:id" },
+    { "source": "/api/schedule/due",                  "destination": "/api/schedule?due=1" },
+    { "source": "/api/tasks",                         "destination": "/api/tasks" },
+    { "source": "/api/providers/health",              "destination": "/api/providers" },
+    { "source": "/api/router/route",                  "destination": "/api/providers?action=route" },
+    { "source": "/api/google/oauth/start",            "destination": "/api/google/oauth?action=start" },
+    { "source": "/api/google/oauth/callback",         "destination": "/api/google/oauth?action=callback" },
+    { "source": "/api/google/drive/list",             "destination": "/api/google/workspace?action=drive.list" },
+    { "source": "/api/google/drive/read",             "destination": "/api/google/workspace?action=drive.read" },
+    { "source": "/api/google/drive/upload",           "destination": "/api/google/workspace?action=drive.upload" },
+    { "source": "/api/google/calendar/list",          "destination": "/api/google/workspace?action=calendar.list" },
+    { "source": "/api/google/calendar/create",        "destination": "/api/google/workspace?action=calendar.create" },
+    { "source": "/api/google/gmail/read",             "destination": "/api/google/workspace?action=gmail.read" },
+    { "source": "/api/google/gmail/search",           "destination": "/api/google/workspace?action=gmail.search" },
+    { "source": "/api/(.*)",                          "destination": "/api/$1" },
+    { "source": "/(.*)",                              "destination": "/$1" }
   ],
   "env": {
     "NODE_ENV": "production"

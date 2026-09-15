@@ -1,12 +1,21 @@
-/**
- * /api/tasks
- * GET: Poll background task status
- * POST: Enqueue a background task
+﻿/**
+ * api/tasks.js
+ * Tasks Handler for NAD JARVIS
+ *
+ * Identical functionality to original api/tasks/index.js.
+ * Moved to top-level api/ directory so it counts as ONE serverless function
+ * instead of a nested directory function.
+ *
+ * Routes (unchanged):
+ *   GET  /api/tasks        -> list recent tasks
+ *   GET  /api/tasks?id=    -> poll specific task
+ *   POST /api/tasks        -> enqueue a new task
+ *
  * Conforms to Section 5
  */
 
-const { verifyOwnerSession } = require('../../lib/auth');
-const { logAuditEvent } = require('../../lib/audit');
+const { verifyOwnerSession } = require('../lib/auth');
+const { logAuditEvent } = require('../lib/audit');
 
 module.exports = async function handler(req, res) {
   const auth = await verifyOwnerSession(req, res);
@@ -54,12 +63,7 @@ module.exports = async function handler(req, res) {
     try {
       const { data: task, error } = await client
         .from('tasks')
-        .insert({
-          user_id: userId,
-          task_type: taskType,
-          payload,
-          status: 'queued'
-        })
+        .insert({ user_id: userId, task_type: taskType, payload, status: 'queued' })
         .select('*')
         .single();
 
