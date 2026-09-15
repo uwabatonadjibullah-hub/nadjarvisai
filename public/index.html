@@ -52,35 +52,35 @@
 
       <!-- Scrollable Navigation Items -->
       <nav class="sidebar-nav" id="sidebar-nav">
-        <button class="nav-item active" data-view="new-chat">
+        <button class="nav-item active" data-view="new-chat" title="New Chat">
           <i class="fa-solid fa-plus nav-icon"></i>
           <span>New Chat</span>
         </button>
-        <button class="nav-item" data-view="search">
+        <button class="nav-item" data-view="search" title="Search Chat">
           <i class="fa-solid fa-magnifying-glass nav-icon"></i>
           <span>Search Chat</span>
         </button>
-        <button class="nav-item" data-view="accounts">
+        <button class="nav-item" data-view="accounts" title="Accounts">
           <i class="fa-solid fa-users-gear nav-icon"></i>
           <span>Accounts</span>
         </button>
-        <button class="nav-item" data-view="drives">
+        <button class="nav-item" data-view="drives" title="Drives">
           <i class="fa-solid fa-hard-drive nav-icon"></i>
           <span>Drives</span>
         </button>
-        <button class="nav-item" data-view="calendar">
+        <button class="nav-item" data-view="calendar" title="Calendar">
           <i class="fa-solid fa-calendar-days nav-icon"></i>
           <span>Calendar</span>
         </button>
-        <button class="nav-item" data-view="tasks">
+        <button class="nav-item" data-view="tasks" title="Tasks">
           <i class="fa-solid fa-list-check nav-icon"></i>
           <span>Tasks</span>
         </button>
-        <button class="nav-item" data-view="audio-ai">
+        <button class="nav-item" data-view="audio-ai" title="Voice">
           <i class="fa-solid fa-microphone nav-icon"></i>
           <span>Voice</span>
         </button>
-        <button class="nav-item" data-view="settings">
+        <button class="nav-item" data-view="settings" title="Settings">
           <i class="fa-solid fa-sliders nav-icon"></i>
           <span>Settings</span>
         </button>
@@ -217,6 +217,15 @@
 
           <!-- Direct Message Stream (WhatsApp / ChatGPT Hybrid) -->
           <div class="chat-stream-container" id="chat-stream-container">
+            <div class="chat-stream-header">
+              <button id="btn-back-to-hero" class="btn-secondary-sm" title="Back to Overview">
+                <i class="fa-solid fa-arrow-left"></i> <span>Overview</span>
+              </button>
+              <div class="chat-stream-title">
+                <i class="fa-solid fa-sparkles" style="color: #d4af37;"></i>
+                <span>Interactive Session</span>
+              </div>
+            </div>
             <div class="chat-bubble ai-bubble">
               <img src="icon-logo.jpg" class="bubble-avatar" alt="Jarvis">
               <div class="bubble-text">
@@ -691,6 +700,35 @@
           <a href="login.html" style="font-size: 0.82rem; color: #d4af37; text-decoration: none;">Go to Full Login Page &rarr;</a>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Centered Mic Voice Experience Modal / Overlay with Audio-Reactive Wiggling Rings -->
+  <div id="voice-zoom-overlay" class="voice-zoom-overlay">
+    <button id="btn-close-voice-zoom" class="voice-zoom-close" title="Exit Voice Mode">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <div class="voice-zoom-content">
+      <div class="voice-center-orb-wrapper" id="voice-orb-wrapper">
+        <!-- Concentric Audio-Reactive Wiggling Rings -->
+        <div class="voice-reactive-ring ring-outer" id="voice-ring-outer"></div>
+        <div class="voice-reactive-ring ring-mid" id="voice-ring-mid"></div>
+        <div class="voice-reactive-ring ring-inner" id="voice-ring-inner"></div>
+
+        <!-- Center Glowing Mic Core -->
+        <button id="btn-zoomed-mic" class="zoomed-mic-core" title="Click to Stop / Speak">
+          <i class="fa-solid fa-microphone"></i>
+        </button>
+      </div>
+
+      <div class="voice-zoom-info">
+        <h2 id="voice-zoom-status" class="voice-zoom-status">Listening...</h2>
+        <p id="voice-zoom-transcript" class="voice-zoom-transcript">Speak naturally to Jarvis...</p>
+        <div class="voice-frequency-visualizer">
+          <canvas id="voice-frequency-canvas" width="280" height="36"></canvas>
+        </div>
+      </div>
     </div>
   </div>
 

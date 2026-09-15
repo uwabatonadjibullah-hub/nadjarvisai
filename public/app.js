@@ -251,8 +251,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.innerWidth <= 900) {
       closeMobileSidebar();
     } else {
-      sidebar.classList.add('collapsed');
-      btnShowSidebar.style.display = 'flex';
+      const isCollapsed = sidebar.classList.toggle('collapsed');
+      if (isCollapsed) {
+        btnHideSidebar.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+        btnHideSidebar.title = 'Expand Sidebar';
+      } else {
+        btnHideSidebar.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
+        btnHideSidebar.title = 'Collapse Sidebar';
+      }
     }
   });
 
@@ -261,6 +267,8 @@ document.addEventListener('DOMContentLoaded', () => {
       openMobileSidebar();
     } else {
       sidebar.classList.remove('collapsed');
+      btnHideSidebar.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
+      btnHideSidebar.title = 'Collapse Sidebar';
       btnShowSidebar.style.display = 'none';
     }
   });
@@ -356,35 +364,269 @@ document.addEventListener('DOMContentLoaded', () => {
       loadMemoryItems();
       loadKnowledgeDocs();
     } else if (viewName === 'new-chat') {
-      const chatInput = document.getElementById('chat-input-field');
-      if (chatInput) chatInput.focus();
+      const unifiedLayout = document.querySelector('.unified-chat-layout');
+      if (unifiedLayout) unifiedLayout.classList.remove('chat-active');
     }
   }
 
-  // --- 6. Hero Triggers ---
+  // --- 6. Hero Triggers & Audio-Reactive Voice Zoom Experience ---
   const micTriggerHero = document.getElementById('mic-trigger-hero');
   const btnMicHero = document.getElementById('btn-mic-hero');
   const pillTriggerHero = document.getElementById('pill-trigger-hero');
+  const unifiedChatLayout = document.querySelector('.unified-chat-layout');
+  const btnBackToHero = document.getElementById('btn-back-to-hero');
 
-  if (micTriggerHero) {
-    micTriggerHero.addEventListener('click', () => {
-      if (btnMicHero) btnMicHero.classList.add('rising');
-
-      setTimeout(() => {
-        if (btnMicHero) btnMicHero.classList.remove('rising');
-        switchView('audio-ai');
-        startVoiceListening();
-      }, 350);
-    });
-  }
-
-  if (pillTriggerHero) {
+  // Initiate interactive chat only when user clicks Start Interactive Chat
+  if (pillTriggerHero && unifiedChatLayout) {
     pillTriggerHero.addEventListener('click', () => {
-      const heroBanner = document.getElementById('hero-banner-container');
-      if (heroBanner) heroBanner.classList.add('minimized');
+      unifiedChatLayout.classList.add('chat-active');
       const chatInput = document.getElementById('chat-input-field');
       if (chatInput) chatInput.focus();
     });
+  }
+
+  // Back to overview button
+  if (btnBackToHero && unifiedChatLayout) {
+    btnBackToHero.addEventListener('click', () => {
+      unifiedChatLayout.classList.remove('chat-active');
+    });
+  }
+
+  // Centered Voice Zoom Modal Elements
+  const voiceZoomOverlay = document.getElementById('voice-zoom-overlay');
+  const btnCloseVoiceZoom = document.getElementById('btn-close-voice-zoom');
+  const btnZoomedMic = document.getElementById('btn-zoomed-mic');
+  const voiceZoomStatus = document.getElementById('voice-zoom-status');
+  const voiceZoomTranscript = document.getElementById('voice-zoom-transcript');
+  const voiceRingOuter = document.getElementById('voice-ring-outer');
+  const voiceRingMid = document.getElementById('voice-ring-mid');
+  const voiceRingInner = document.getElementById('voice-ring-inner');
+  const voiceFreqCanvas = document.getElementById('voice-frequency-canvas');
+  const voiceFreqCtx = voiceFreqCanvas ? voiceFreqCanvas.getContext('2d') : null;
+
+  let voiceAudioCtx = null;
+  let voiceAnalyser = null;
+  let voiceStream = null;
+  let voiceDataArray = null;
+  let voiceAnimFrameId = null;
+  let voiceSpeechRec = null;
+  let isVoiceZoomActive = false;
+  let isVoiceSpeakingNow = false;
+
+  if (micTriggerHero) {
+    micTriggerHero.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openVoiceZoomExperience();
+    });
+  }
+  if (btnMicHero) {
+    btnMicHero.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openVoiceZoomExperience();
+    });
+  }
+
+  if (btnCloseVoiceZoom) {
+    btnCloseVoiceZoom.addEventListener('click', closeVoiceZoomExperience);
+  }
+
+  if (btnZoomedMic) {
+    btnZoomedMic.addEventListener('click', () => {
+      if (isVoiceSpeakingNow) return;
+      if (voiceSpeechRec) {
+        try { voiceSpeechRec.start(); } catch (e) {}
+      }
+    });
+  }
+
+  function openVoiceZoomExperience() {
+    if (!voiceZoomOverlay) return;
+    voiceZoomOverlay.classList.add('active');
+    isVoiceZoomActive = true;
+    if (voiceZoomStatus) voiceZoomStatus.textContent = 'Listening to your voice...';
+    if (voiceZoomTranscript) voiceZoomTranscript.textContent = 'Speak naturally to Jarvis...';
+    if (btnZoomedMic) btnZoomedMic.classList.add('listening');
+
+    startVoiceAudioAnalyser();
+    startZoomedSpeechRecognition();
+  }
+
+  function closeVoiceZoomExperience() {
+    if (!voiceZoomOverlay) return;
+    voiceZoomOverlay.classList.remove('active');
+    isVoiceZoomActive = false;
+    if (btnZoomedMic) btnZoomedMic.classList.remove('listening');
+
+    stopZoomedSpeechRecognition();
+
+    if (voiceAnimFrameId) {
+      cancelAnimationFrame(voiceAnimFrameId);
+      voiceAnimFrameId = null;
+    }
+
+    if (voiceStream) {
+      voiceStream.getTracks().forEach(track => track.stop());
+      voiceStream = null;
+    }
+  }
+
+  async function startVoiceAudioAnalyser() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      voiceStream = stream;
+
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      voiceAudioCtx = new AudioContextClass();
+      const source = voiceAudioCtx.createMediaStreamSource(stream);
+      voiceAnalyser = voiceAudioCtx.createAnalyser();
+      voiceAnalyser.fftSize = 64;
+      voiceAnalyser.smoothingTimeConstant = 0.8;
+      source.connect(voiceAnalyser);
+
+      voiceDataArray = new Uint8Array(voiceAnalyser.frequencyBinCount);
+      runAudioReactiveLoop(false);
+    } catch (err) {
+      console.warn('[Audio-Reactive Voice]: Falling back to fluid procedural wave:', err);
+      runAudioReactiveLoop(true);
+    }
+  }
+
+  let wigglePhase = 0;
+  function runAudioReactiveLoop(simulated = false) {
+    if (!isVoiceZoomActive) return;
+
+    wigglePhase += 0.09;
+    let loudness = 0;
+
+    if (!simulated && voiceAnalyser && voiceDataArray) {
+      voiceAnalyser.getByteFrequencyData(voiceDataArray);
+      let sum = 0;
+      for (let i = 0; i < voiceDataArray.length; i++) {
+        sum += voiceDataArray[i];
+      }
+      loudness = sum / voiceDataArray.length;
+    } else {
+      loudness = 25 + Math.sin(wigglePhase) * 22 + Math.cos(wigglePhase * 1.6) * 14;
+    }
+
+    const norm = Math.min(loudness / 100, 1.6);
+    const scaleOuter = 1 + norm * 0.4;
+    const scaleMid = 1 + norm * 0.28;
+    const scaleInner = 1 + norm * 0.18;
+    const scaleCore = 1 + norm * 0.12;
+
+    const wiggle = norm * 20;
+    const r1 = 50 + Math.sin(wigglePhase * 2.2) * wiggle;
+    const r2 = 50 + Math.cos(wigglePhase * 1.7) * wiggle;
+    const r3 = 50 + Math.sin(wigglePhase * 2.6) * wiggle;
+    const r4 = 50 + Math.cos(wigglePhase * 1.3) * wiggle;
+
+    if (voiceRingOuter) {
+      voiceRingOuter.style.transform = `scale(${scaleOuter})`;
+      voiceRingOuter.style.borderRadius = `${r1}% ${100 - r1}% ${r2}% ${100 - r2}% / ${r3}% ${r4}% ${100 - r4}% ${100 - r3}%`;
+      voiceRingOuter.style.borderColor = norm > 0.45 ? 'rgba(212, 175, 55, 0.8)' : 'rgba(212, 175, 55, 0.35)';
+    }
+
+    if (voiceRingMid) {
+      voiceRingMid.style.transform = `scale(${scaleMid})`;
+      voiceRingMid.style.borderRadius = `${r2}% ${100 - r2}% ${r3}% ${100 - r3}% / ${r4}% ${r1}% ${100 - r1}% ${100 - r4}%`;
+    }
+
+    if (voiceRingInner) {
+      voiceRingInner.style.transform = `scale(${scaleInner})`;
+      voiceRingInner.style.borderRadius = `${r3}% ${100 - r3}% ${r4}% ${100 - r4}% / ${r1}% ${r2}% ${100 - r2}% ${100 - r1}%`;
+    }
+
+    if (btnZoomedMic) {
+      btnZoomedMic.style.transform = `scale(${scaleCore})`;
+    }
+
+    if (voiceFreqCtx && voiceFreqCanvas) {
+      voiceFreqCtx.clearRect(0, 0, voiceFreqCanvas.width, voiceFreqCanvas.height);
+      const bars = 18;
+      const barWidth = 8;
+      const barGap = 6;
+      const startX = (voiceFreqCanvas.width - (bars * (barWidth + barGap))) / 2;
+
+      for (let i = 0; i < bars; i++) {
+        const val = (!simulated && voiceDataArray && voiceDataArray[i]) ? voiceDataArray[i] : (20 + Math.sin(wigglePhase + i * 0.35) * 20);
+        const barHeight = Math.max(3, (val / 255) * voiceFreqCanvas.height);
+        const y = (voiceFreqCanvas.height - barHeight) / 2;
+        voiceFreqCtx.fillStyle = norm > 0.5 ? '#facc15' : '#d4af37';
+        voiceFreqCtx.fillRect(startX + i * (barWidth + barGap), y, barWidth, barHeight);
+      }
+    }
+
+    voiceAnimFrameId = requestAnimationFrame(() => runAudioReactiveLoop(simulated));
+  }
+
+  function startZoomedSpeechRecognition() {
+    if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) return;
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    voiceSpeechRec = new SpeechRec();
+    voiceSpeechRec.continuous = false;
+    voiceSpeechRec.interimResults = true;
+    voiceSpeechRec.lang = 'en-US';
+
+    voiceSpeechRec.onresult = (event) => {
+      let interim = '';
+      let final = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          final += event.results[i][0].transcript;
+        } else {
+          interim += event.results[i][0].transcript;
+        }
+      }
+
+      if (voiceZoomTranscript) {
+        voiceZoomTranscript.textContent = `"${final || interim}"`;
+      }
+
+      if (final) {
+        handleVoiceZoomPrompt(final);
+      }
+    };
+
+    voiceSpeechRec.onerror = () => {
+      if (voiceZoomStatus && !isVoiceSpeakingNow) voiceZoomStatus.textContent = 'Listening to your voice...';
+    };
+
+    voiceSpeechRec.onend = () => {
+      if (isVoiceZoomActive && !isVoiceSpeakingNow) {
+        try { voiceSpeechRec.start(); } catch (e) {}
+      }
+    };
+
+    try { voiceSpeechRec.start(); } catch (e) {}
+  }
+
+  function stopZoomedSpeechRecognition() {
+    if (voiceSpeechRec) {
+      try { voiceSpeechRec.stop(); } catch (e) {}
+      voiceSpeechRec = null;
+    }
+  }
+
+  async function handleVoiceZoomPrompt(promptText) {
+    if (!promptText || isVoiceSpeakingNow) return;
+    isVoiceSpeakingNow = true;
+    if (voiceZoomStatus) voiceZoomStatus.textContent = 'Jarvis Thinking...';
+
+    const res = await queryWorkerChatAPI(promptText);
+    const replyText = typeof res === 'string' ? res : (res.reply || 'All systems synchronized.');
+
+    if (voiceZoomStatus) voiceZoomStatus.textContent = 'Jarvis Speaking';
+    if (voiceZoomTranscript) voiceZoomTranscript.textContent = replyText;
+
+    speakResponse(replyText);
+
+    setTimeout(() => {
+      isVoiceSpeakingNow = false;
+      if (isVoiceZoomActive && voiceZoomStatus) {
+        voiceZoomStatus.textContent = 'Listening to your voice...';
+      }
+    }, 4500);
   }
 
 
@@ -555,8 +797,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const text = chatInputField.value.trim();
     if (!text) return;
 
-    const heroBanner = document.getElementById('hero-banner-container');
-    if (heroBanner) heroBanner.classList.add('minimized');
+    if (unifiedChatLayout) unifiedChatLayout.classList.add('chat-active');
 
     appendUserChatMessage(text);
     chatInputField.value = '';
@@ -1366,11 +1607,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.handleOpenSearchResult = function(title) {
     switchView('new-chat');
-    const heroBanner = document.getElementById('hero-banner-container');
-    if (heroBanner) heroBanner.classList.add('minimized');
+    if (unifiedChatLayout) unifiedChatLayout.classList.add('chat-active');
     appendUserChatMessage(`Open archive for: ${title}`);
     appendJarvisChatResponse(`Loaded archived conversation context for "${title}". All variables and references are in memory.`);
   };
+
 
   // --- 17. Settings Tabs (Profile, Memory, Knowledge) ---
   const settingsTabBtns = document.querySelectorAll('.settings-tab-btn');
@@ -1478,11 +1719,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.handleSelectConversation = function(id, title) {
     switchView('new-chat');
-    const heroBanner = document.getElementById('hero-banner-container');
-    if (heroBanner) heroBanner.classList.add('minimized');
+    if (unifiedChatLayout) unifiedChatLayout.classList.add('chat-active');
     appendUserChatMessage(`Resume chat: ${title}`);
     appendJarvisChatResponse(`Restored conversation session "${title}". You can continue typing commands or voice instructions.`);
   };
+
 
   // --- 19. Authentication State & Modal Management ---
   const authStatusCluster = document.getElementById('auth-status-cluster');
