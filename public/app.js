@@ -755,7 +755,8 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const token = localStorage.getItem('nad_jarvis_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-        const res = await fetch('/api/google/oauth/start', { headers });
+        // Consolidated endpoint: /api/google/oauth?action=start
+        const res = await fetch('/api/google/oauth?action=start', { headers });
         const data = await res.json();
         if (data.authUrl) {
           window.location.href = data.authUrl;
@@ -774,7 +775,8 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const token = localStorage.getItem('nad_jarvis_token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-      const res = await fetch('/api/google/drive/list', {
+      // Consolidated endpoint: /api/google/workspace?action=drive.list
+      const res = await fetch('/api/google/workspace?action=drive.list', {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' }
       });
@@ -830,7 +832,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const password = document.getElementById('login-password').value;
 
       try {
-        const res = await fetch('/api/auth/login', {
+        // Consolidated endpoint: /api/auth (POST = login action)
+        const res = await fetch('/api/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password })

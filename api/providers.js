@@ -1,4 +1,4 @@
-﻿/**
+/**
  * api/providers.js
  * Consolidated Providers & Router Diagnostic Handler for NAD JARVIS
  *

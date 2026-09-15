@@ -1,4 +1,4 @@
-﻿/**
+/**
  * api/tasks.js
  * Tasks Handler for NAD JARVIS
  *

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * api/google/workspace.js
  * Consolidated Google Workspace Handler for NAD JARVIS
  *

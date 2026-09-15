@@ -1,4 +1,4 @@
-﻿/**
+/**
  * api/files.js
  * Consolidated File Handler for NAD JARVIS
  *

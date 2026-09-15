@@ -1,4 +1,4 @@
-﻿/**
+/**
  * api/schedule.js
  * Consolidated Schedule Handler for NAD JARVIS
  *

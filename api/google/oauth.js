@@ -1,4 +1,4 @@
-﻿/**
+/**
  * api/google/oauth.js
  * Consolidated Google OAuth Handler for NAD JARVIS
  *

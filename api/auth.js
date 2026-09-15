@@ -1,4 +1,4 @@
-﻿/**
+/**
  * api/auth.js
  * Consolidated Authentication Handler for NAD JARVIS
  *
