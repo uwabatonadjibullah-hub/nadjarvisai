@@ -87,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let isListening = false;
   let isSpeaking = false;
   let isLightMode = false;
+  let activeConversationId = null;
 
   // --- 4. Three.js 3D Woven Light Background (Optimized 12,000 Particles) ---
   const wovenContainer = document.getElementById('woven-background-canvas');
@@ -364,6 +365,9 @@ document.addEventListener('DOMContentLoaded', () => {
       loadMemoryItems();
       loadKnowledgeDocs();
     } else if (viewName === 'new-chat') {
+      activeConversationId = null;
+      const chatStream = document.getElementById('chat-stream-container');
+      if (chatStream) chatStream.innerHTML = '';
       const unifiedLayout = document.querySelector('.unified-chat-layout');
       if (unifiedLayout) unifiedLayout.classList.remove('chat-active');
     }
@@ -849,63 +853,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function queryWorkerChatAPI(userPrompt) {
     try {
-      const token = localStorage.getItem('nad_jarvis_token');
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      let data;
+      if (window.JarvisAPI) {
+        data = await window.JarvisAPI.sendMessage(userPrompt, activeConversationId);
+      } else {
+        const token = localStorage.getItem('nad_jarvis_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ message: userPrompt })
-      });
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ message: userPrompt, conversation_id: activeConversationId })
+        });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.reply) return data;
+        data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to communicate with AI core');
+      }
+
+      if (data) {
+        if (data.conversation_id) {
+          activeConversationId = data.conversation_id;
+          loadConversationHistory();
+        }
+        return data;
       }
     } catch (e) {
-      console.warn('[Backend Worker Sync Note]: Using Client Knowledge Base');
+      console.warn('[Chat Core API Warning]:', e);
+      return {
+        reply: `NAD JARVIS Core Notice: Unable to reach the AI router (${e.message || 'Check connection'}). Please verify your credentials and model provider API keys.`,
+        provider: 'System',
+        model: 'Offline'
+      };
     }
 
-    const p = userPrompt.toLowerCase();
-
-    if (p.includes('hello jarvis') || p.includes('hey jarvis') || p.includes('hello, jarvis') || p === 'hello') {
-      return "Hello Nad! I am online and fully synchronized with your Google Drive, Google Calendar, and Mega storage. How can I assist your schedule or projects today?";
-    }
-
-    if (p.includes('who am i') || p.includes('profile') || p.includes('identity')) {
-      return `You are ${NAD_PROFILE_DB.name} ("Nad"), based in ${NAD_PROFILE_DB.location}. ${NAD_PROFILE_DB.education} Currently Operations Manager at KSP Rwanda and founder of NAD PRODUCTION Ltd. Creator of NAD JARVIS AI, TRADIT AI, and INK LINK AI.`;
-    }
-
-    if (p.includes('capstone') || p.includes('saev') || p.includes('engineering') || p.includes('vehicle')) {
-      return `${NAD_PROFILE_DB.education}`;
-    }
-
-    if (p.includes('sprint') || p.includes('execution') || p.includes('5-month')) {
-      return `Your ${NAD_PROFILE_DB.sprint}`;
-    }
-
-    if (p.includes('ai builds') || p.includes('products') || p.includes('tradit') || p.includes('ink link')) {
-      return `Your self-built AI products designed and shipped by you are:\n1. NAD JARVIS AI (Personal Voice Assistant)\n2. TRADIT AI (Original AI Product)\n3. INK LINK AI (Original AI Product)`;
-    }
-
-    if (p.includes('film') || p.includes('gaju') || p.includes('urumuri') || p.includes('podcast')) {
-      return `Your creative film projects include URUMURI STUDIOS ("GAJU" short film), OMNITALES HUB, GET BETTER PODCAST, and United Gen. Basketball pitch. Target MFA Film Production for Fall 2027.`;
-    }
-
-    if (p.includes('schedule') || p.includes('week') || p.includes('tahajjud') || p.includes('friday')) {
-      return `${NAD_PROFILE_DB.weeklySchedule}`;
-    }
-
-    if (p.includes('vision') || p.includes('future') || p.includes('ambition')) {
-      return `Your long-term vision: "${NAD_PROFILE_DB.longTermVision}"`;
-    }
-
-    if (p.includes('drive') || p.includes('mega') || p.includes('file')) {
-      return `I can browse, read, and download files from Google Drive and Mega Storage (uwabatonadjibullah@gmail.com).`;
-    }
-
-    return `Hello Nad. I'm ready to assist with your engineering capstone, video editing schedules, software dev sprint, or cloud file operations. What would you like to do next?`;
+    return {
+      reply: "No response received from the AI router. Please try again.",
+      provider: 'System',
+      model: 'Offline'
+    };
   }
 
   // --- 10. Schedule Spreadsheet Generator Injected with Nad's CSV Schedule ---
@@ -1045,10 +1031,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         if (window.JarvisGoogle) {
+          const accountId = driveAccountSelect ? driveAccountSelect.value : null;
           await window.JarvisGoogle.uploadToDrive({
             name: file.name,
             mimeType: file.type || 'application/octet-stream',
-            size: `${(file.size / 1024).toFixed(1)} KB`
+            size: `${(file.size / 1024).toFixed(1)} KB`,
+            accountId
           });
           alert(`File "${file.name}" registered in Cloud Storage!`);
           loadDriveFiles();
@@ -1074,15 +1062,24 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     try {
-      const nickname = driveAccountSelect ? driveAccountSelect.options[driveAccountSelect.selectedIndex].text : "Nad's Google Drive";
+      if (driveAccountSelect && window.JarvisGoogle) {
+        const accRes = await window.JarvisGoogle.getAccounts();
+        const accs = accRes.accounts || [];
+        if (accs.length > 0 && driveAccountSelect.options.length <= 1) {
+          const curVal = driveAccountSelect.value;
+          driveAccountSelect.innerHTML = accs.map(a => `<option value="${escapeHtml(a.id)}" ${a.id === curVal ? 'selected' : ''}>${escapeHtml(a.nickname || a.email)}</option>`).join('');
+        }
+      }
+
+      const accountId = driveAccountSelect && driveAccountSelect.value ? driveAccountSelect.value : (window.JarvisGoogle ? window.JarvisGoogle.getSelectedAccount() : null);
       let data;
       if (window.JarvisGoogle) {
-        data = await window.JarvisGoogle.listDriveFiles('root', nickname);
+        data = await window.JarvisGoogle.listDriveFiles('root', null, accountId);
       } else {
         const res = await fetch('/api/google/workspace?action=drive.list', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ folderId: 'root', nickname })
+          body: JSON.stringify({ folderId: 'root', accountId })
         });
         data = await res.json();
       }
@@ -1152,10 +1149,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnAddGoogleAccount) {
     btnAddGoogleAccount.addEventListener('click', async () => {
       try {
+        const nickname = prompt('Enter a nickname for this Google Account (e.g. Personal, Work, School):', 'Personal');
+        if (!nickname) return;
+
         if (window.JarvisGoogle) {
-          await window.JarvisGoogle.initiateOAuth();
+          await window.JarvisGoogle.initiateOAuth(nickname);
         } else {
-          const res = await fetch('/api/google/oauth?action=start');
+          const res = await fetch(`/api/google/oauth?action=start&nickname=${encodeURIComponent(nickname)}`);
           const data = await res.json();
           if (data.authUrl) window.location.href = data.authUrl;
         }
@@ -1183,23 +1183,26 @@ document.addEventListener('DOMContentLoaded', () => {
         accounts = res.accounts || [];
       }
 
-      // Default fallback account if server hasn't saved yet
       if (accounts.length === 0) {
-        accounts = [
-          {
-            id: 'google-default',
-            provider: 'google',
-            nickname: "Nad's Google Workspace",
-            email: "uwabatonadjibullah@gmail.com",
-            status: "connected",
-            services: { drive: true, calendar: true, gmail: true },
-            connectedAt: new Date().toISOString()
-          }
-        ];
+        grid.innerHTML = `
+          <div class="empty-state-card" style="grid-column: 1 / -1; padding: 40px 20px;">
+            <i class="fa-brands fa-google empty-icon" style="font-size: 2.2rem; color: #d4af37; margin-bottom: 12px;"></i>
+            <h3>No Connected Google Accounts</h3>
+            <p style="max-width: 500px; margin: 8px auto 16px; color: var(--text-muted);">
+              Connect your Google Accounts (Personal, Work, or School) to enable Drive, Gmail, and Calendar coordination for NAD JARVIS.
+            </p>
+          </div>
+        `;
+        return;
       }
 
-      grid.innerHTML = accounts.map(acc => `
-        <div class="account-conn-card">
+      const activeAccId = window.JarvisGoogle ? window.JarvisGoogle.getSelectedAccount() : null;
+
+      grid.innerHTML = accounts.map(acc => {
+        const isSelected = activeAccId === acc.id || (!activeAccId && accounts[0]?.id === acc.id);
+
+        return `
+        <div class="account-conn-card ${isSelected ? 'active-selection' : ''}" style="${isSelected ? 'border-color: #d4af37; box-shadow: 0 0 15px rgba(212,175,55,0.15);' : ''}">
           <div class="account-conn-header">
             <div class="account-conn-avatar">
               <i class="fa-brands fa-${acc.provider === 'google' ? 'google' : 'cloud'}"></i>
@@ -1210,7 +1213,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="status-pill">
               <span class="status-dot"></span>
-              <span>Active</span>
+              <span>${acc.status === 'connected' ? 'Connected' : 'Active'}</span>
             </div>
           </div>
 
@@ -1224,15 +1227,16 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
 
           <div class="account-conn-actions">
-            <button class="btn-secondary-sm" onclick="window.JarvisGoogle.initiateOAuth()">
-              <i class="fa-solid fa-arrows-rotate"></i> Re-authorize
+            <button class="btn-secondary-sm" onclick="window.handleSelectAccount('${escapeHtml(acc.id)}')">
+              <i class="fa-solid ${isSelected ? 'fa-check-circle' : 'fa-circle-dot'}"></i> ${isSelected ? 'Active Account' : 'Select'}
             </button>
-            <button class="btn-secondary-sm" onclick="alert('Account synchronized with server token vault!')">
-              <i class="fa-solid fa-check"></i> Verified
+            <button class="btn-secondary-sm" onclick="window.handleDisconnectAccount('${escapeHtml(acc.id)}', '${escapeHtml(acc.nickname || acc.email)}')">
+              <i class="fa-solid fa-link-slash" style="color: #f87171;"></i> Disconnect
             </button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
 
     } catch (e) {
       grid.innerHTML = `
@@ -1244,6 +1248,25 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }
   }
+
+  window.handleSelectAccount = function(accountId) {
+    if (window.JarvisGoogle) {
+      window.JarvisGoogle.setSelectedAccount(accountId);
+    }
+    loadAccountsPage();
+  };
+
+  window.handleDisconnectAccount = async function(accountId, nickname) {
+    if (!confirm(`Are you sure you want to disconnect account "${nickname}"?`)) return;
+    try {
+      if (window.JarvisGoogle) {
+        await window.JarvisGoogle.disconnectAccount(accountId);
+      }
+      loadAccountsPage();
+    } catch (err) {
+      alert('Failed to disconnect account: ' + err.message);
+    }
+  };
 
   // --- 14. Calendar Subnav & Live Events ---
   const tabBtnGoogleCal = document.getElementById('tab-btn-google-cal');
@@ -1276,7 +1299,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const calErr = document.getElementById('cal-event-error');
 
   if (btnOpenCalModal && modalCal) {
-    btnOpenCalModal.addEventListener('click', () => {
+    btnOpenCalModal.addEventListener('click', async () => {
+      const accSelect = document.getElementById('cal-event-account');
+      if (accSelect && window.JarvisGoogle) {
+        try {
+          const res = await window.JarvisGoogle.getAccounts();
+          const accs = res.accounts || [];
+          const curSelected = window.JarvisGoogle.getSelectedAccount();
+          accSelect.innerHTML = accs.length > 0 ? accs.map(a => 
+            `<option value="${escapeHtml(a.id)}" ${a.id === curSelected ? 'selected' : ''}>${escapeHtml(a.nickname || a.email)}</option>`
+          ).join('') : '<option value="">No Connected Google Account</option>';
+        } catch (e) {}
+      }
       modalCal.style.display = 'flex';
     });
   }
@@ -1293,6 +1327,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       if (calErr) calErr.style.display = 'none';
 
+      const accountId = document.getElementById('cal-event-account')?.value || null;
       const summary = document.getElementById('cal-event-title').value.trim();
       const startTime = document.getElementById('cal-event-start').value;
       const endTime = document.getElementById('cal-event-end').value;
@@ -1301,10 +1336,12 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         if (window.JarvisGoogle) {
           await window.JarvisGoogle.createCalendarEvent({
+            accountId,
             summary,
             description: desc,
             start: { dateTime: new Date(startTime).toISOString() },
-            end: { dateTime: new Date(endTime).toISOString() }
+            end: { dateTime: new Date(endTime).toISOString() },
+            confirmed: true
           });
         }
         alert(`Event "${summary}" successfully scheduled!`);
@@ -1339,31 +1376,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (events.length === 0) {
-        // Sample scheduled events for Nad
-        events = [
-          {
-            summary: "SAEV Capstone FEA Simulation Review",
-            start: { dateTime: "2026-09-16T14:30:00+02:00" },
-            end: { dateTime: "2026-09-16T16:30:00+02:00" },
-            description: "Mechanical Engineering final-year simulation and solar irradiance data verification."
-          },
-          {
-            summary: "KSP Rwanda Operations Sprint",
-            start: { dateTime: "2026-09-17T09:00:00+02:00" },
-            end: { dateTime: "2026-09-17T12:00:00+02:00" },
-            description: "Operations workflow inspection and team sync."
-          },
-          {
-            summary: "ZAD Academy Lecture Block",
-            start: { dateTime: "2026-09-18T11:30:00+02:00" },
-            end: { dateTime: "2026-09-18T12:30:00+02:00" },
-            description: "Online Islamic studies and curriculum module review."
-          }
-        ];
+        container.innerHTML = `
+          <div class="empty-state-card" style="grid-column: 1 / -1; padding: 36px 16px;">
+            <i class="fa-regular fa-calendar-check empty-icon" style="font-size: 2rem; color: #d4af37; margin-bottom: 8px;"></i>
+            <h3>No Scheduled Events</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">No upcoming Google Calendar appointments found for the selected account.</p>
+          </div>
+        `;
+        return;
       }
 
       container.innerHTML = events.map(ev => {
-        const start = ev.start?.dateTime ? new Date(ev.start.dateTime) : new Date();
+        const start = ev.start?.dateTime ? new Date(ev.start.dateTime) : (ev.date ? new Date(ev.date) : new Date());
         const end = ev.end?.dateTime ? new Date(ev.end.dateTime) : null;
         const timeStr = start.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) +
           ' • ' + start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) +
@@ -1375,7 +1399,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <i class="fa-regular fa-clock"></i>
               <span>${escapeHtml(timeStr)}</span>
             </div>
-            <div class="cal-event-title">${escapeHtml(ev.summary || 'Scheduled Event')}</div>
+            <div class="cal-event-title">${escapeHtml(ev.summary || ev.title || 'Scheduled Event')}</div>
             <div class="cal-event-desc">${escapeHtml(ev.description || 'Google Calendar synchronized appointment.')}</div>
           </div>
         `;
@@ -1422,25 +1446,31 @@ document.addEventListener('DOMContentLoaded', () => {
       const priority = prioritySelect.value || 'medium';
       const dueDate = dateInput.value || null;
 
-      const newTask = {
-        id: 'task_' + Date.now(),
-        title,
-        priority,
-        due_date: dueDate,
-        is_completed: false,
-        created_at: new Date().toISOString()
-      };
-
-      localTasks.unshift(newTask);
-      renderTasks();
-      titleInput.value = '';
-
       try {
         if (window.JarvisAPI) {
-          await window.JarvisAPI.createTask(newTask);
+          const res = await window.JarvisAPI.createTask({
+            title,
+            priority,
+            due_date: dueDate
+          });
+          if (res && res.task) {
+            localTasks.unshift(res.task);
+          } else {
+            localTasks.unshift({
+              id: 'task_' + Date.now(),
+              title,
+              priority,
+              due_date: dueDate,
+              is_completed: false,
+              created_at: new Date().toISOString()
+            });
+          }
         }
+        titleInput.value = '';
+        renderTasks();
       } catch (err) {
         console.warn('[Task Save Warning]:', err);
+        alert('Could not save task: ' + err.message);
       }
     });
   }
@@ -1449,26 +1479,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('tasks-list-container');
     if (!container) return;
 
-    if (localTasks.length === 0) {
-      try {
-        if (window.JarvisAPI) {
-          const res = await window.JarvisAPI.getTasks();
-          if (res && res.tasks) {
-            localTasks = res.tasks;
-          }
+    try {
+      if (window.JarvisAPI) {
+        const res = await window.JarvisAPI.getTasks();
+        if (res && res.tasks) {
+          localTasks = res.tasks;
         }
-      } catch (e) {
-        console.warn('Could not fetch tasks from server:', e);
       }
-
-      if (localTasks.length === 0) {
-        localTasks = [
-          { id: '1', title: 'Complete SAEV solar panel irradiance calculation report', priority: 'high', is_completed: false, due_date: '2026-09-20' },
-          { id: '2', title: 'Review KSP Rwanda weekly shift allocations', priority: 'medium', is_completed: false, due_date: '2026-09-18' },
-          { id: '3', title: 'Export GAJU trailer rough cut for sound design pass', priority: 'high', is_completed: true, due_date: '2026-09-14' },
-          { id: '4', title: 'Study ZAD Academy module on Islamic jurisprudence', priority: 'low', is_completed: false, due_date: '2026-09-22' }
-        ];
-      }
+    } catch (e) {
+      console.warn('Could not fetch tasks from server:', e);
+      localTasks = [];
     }
 
     renderTasks();
@@ -1634,51 +1654,189 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- 17. Settings Tabs (Profile, Memory, Knowledge) ---
+  const btnRefreshMemory = document.getElementById('btn-refresh-memory');
+  if (btnRefreshMemory) {
+    btnRefreshMemory.addEventListener('click', loadMemoryItems);
+  }
+
+  const btnRefreshKnowledge = document.getElementById('btn-refresh-knowledge');
+  if (btnRefreshKnowledge) {
+    btnRefreshKnowledge.addEventListener('click', loadKnowledgeDocs);
+  }
+
+  const btnUploadKnowledge = document.getElementById('btn-upload-knowledge');
+  const knowledgeFileInput = document.getElementById('knowledge-file-input-hidden');
+  if (btnUploadKnowledge && knowledgeFileInput) {
+    btnUploadKnowledge.addEventListener('click', () => {
+      knowledgeFileInput.click();
+    });
+
+    knowledgeFileInput.addEventListener('change', async () => {
+      const file = knowledgeFileInput.files[0];
+      if (!file) return;
+
+      try {
+        if (window.JarvisAPI) {
+          await window.JarvisAPI.uploadFile(file, { title: file.name });
+          alert(`Document "${file.name}" uploaded to private storage.`);
+          loadKnowledgeDocs();
+        }
+      } catch (err) {
+        alert('Upload failed: ' + err.message);
+      } finally {
+        knowledgeFileInput.value = '';
+      }
+    });
+  }
+
   async function loadMemoryItems() {
     const list = document.getElementById('memory-items-list');
     if (!list) return;
 
     list.innerHTML = `
-      <div class="memory-item-card">
-        <div class="memory-item-text">Owner Nadjibullah Uwabato is in his final year of Mechanical Engineering at UR CST. His capstone is the SAEV Solar Electric Vehicle.</div>
-        <div class="memory-item-meta"><i class="fa-regular fa-calendar"></i> Verified Core Fact • Permanent</div>
-      </div>
-      <div class="memory-item-card">
-        <div class="memory-item-text">Master weekly schedule begins on Saturday and concludes on Friday. Tahajjud prayer is maintained at 04:00 AM daily.</div>
-        <div class="memory-item-meta"><i class="fa-regular fa-calendar"></i> Verified Schedule Rule • Permanent</div>
-      </div>
-      <div class="memory-item-card">
-        <div class="memory-item-text">Operations Manager at KSP Rwanda, Kigali. Prior Founder/CEO of NAD PRODUCTION Ltd.</div>
-        <div class="memory-item-meta"><i class="fa-regular fa-calendar"></i> Verified Role • Permanent</div>
-      </div>
-      <div class="memory-item-card">
-        <div class="memory-item-text">Self-designed AI products: NAD JARVIS AI, TRADIT AI, and INK LINK AI.</div>
-        <div class="memory-item-meta"><i class="fa-regular fa-calendar"></i> Verified Product Identity • Permanent</div>
+      <div class="empty-state-card" style="padding: 24px;">
+        <i class="fa-solid fa-circle-notch fa-spin empty-icon"></i>
+        <p>Loading personal memory context...</p>
       </div>
     `;
+
+    try {
+      let items = [];
+      if (window.JarvisAPI) {
+        const res = await window.JarvisAPI.getMemory();
+        items = res.memories || [];
+      }
+
+      if (items.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state-card" style="padding: 32px 16px;">
+            <i class="fa-solid fa-brain empty-icon" style="font-size: 2rem; color: #d4af37; margin-bottom: 8px;"></i>
+            <h3>No Memory Items Stored</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+              Facts, instructions, and personal context confirmed with NAD JARVIS will appear here.
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = items.map(m => `
+        <div class="memory-item-card" data-memory-id="${escapeHtml(m.id)}">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+            <div class="memory-item-text">${escapeHtml(m.content || m.item || '')}</div>
+            <button class="btn-icon-xs" onclick="window.handleDeleteMemory('${escapeHtml(m.id)}')" title="Delete memory">
+              <i class="fa-regular fa-trash-can" style="color: #f87171;"></i>
+            </button>
+          </div>
+          <div class="memory-item-meta" style="margin-top: 8px;">
+            <i class="fa-regular fa-calendar"></i>
+            <span>${m.status === 'approved' ? 'Approved Memory' : 'Pending Confirmation'} • ${escapeHtml(m.category || 'General')}</span>
+          </div>
+        </div>
+      `).join('');
+
+    } catch (e) {
+      list.innerHTML = `
+        <div class="empty-state-card" style="padding: 24px;">
+          <p style="color: #f87171;">Failed to load memories: ${escapeHtml(e.message)}</p>
+        </div>
+      `;
+    }
   }
+
+  window.handleDeleteMemory = async function(id) {
+    if (!confirm('Are you sure you want to remove this memory item?')) return;
+    try {
+      if (window.JarvisAPI) {
+        await window.JarvisAPI.deleteMemory(id);
+      }
+      loadMemoryItems();
+    } catch (err) {
+      alert('Failed to delete memory: ' + err.message);
+    }
+  };
 
   async function loadKnowledgeDocs() {
     const list = document.getElementById('knowledge-docs-list');
     if (!list) return;
 
     list.innerHTML = `
-      <div class="doc-item-card">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div style="font-weight: 600; color: #ffffff;"><i class="fa-solid fa-file-pdf" style="color: #d4af37; margin-right: 8px;"></i> SAEV_Solar_Irradiance_Rwanda_Report.pdf</div>
-          <span style="font-size: 0.75rem; color: #4ade80;"><i class="fa-solid fa-circle-check"></i> Indexed (pgvector)</span>
-        </div>
-        <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">7 Chapters with Rwandan national solar insolation indices and mathematical motor torque simulations.</div>
-      </div>
-      <div class="doc-item-card">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div style="font-weight: 600; color: #ffffff;"><i class="fa-solid fa-file-word" style="color: #d4af37; margin-right: 8px;"></i> KSP_Rwanda_Standard_Operating_Procedures.docx</div>
-          <span style="font-size: 0.75rem; color: #4ade80;"><i class="fa-solid fa-circle-check"></i> Indexed (pgvector)</span>
-        </div>
-        <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">Shift protocols, dispatch logs, and equipment maintenance schedules for operations in Kigali.</div>
+      <div class="empty-state-card" style="padding: 24px;">
+        <i class="fa-solid fa-circle-notch fa-spin empty-icon"></i>
+        <p>Retrieving stored documents & files...</p>
       </div>
     `;
+
+    try {
+      let docs = [];
+      if (window.JarvisAPI) {
+        const res = await window.JarvisAPI.getFiles();
+        docs = res.files || [];
+      }
+
+      if (docs.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state-card" style="padding: 32px 16px;">
+            <i class="fa-regular fa-folder-open empty-icon" style="font-size: 2rem; color: #d4af37; margin-bottom: 8px;"></i>
+            <h3>No Stored Knowledge Documents</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+              Upload PDF, DOCX, or text files to build NAD JARVIS's private document knowledge base.
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = docs.map(d => {
+        const isIndexed = d.indexing_status === 'indexed';
+        const statusLabel = isIndexed ? 'Indexed' : 'Stored (Pending Vector Index)';
+        const statusColor = isIndexed ? '#4ade80' : '#d4af37';
+        const iconClass = (d.mime_type || '').includes('pdf') || (d.title || '').endsWith('.pdf') ? 'fa-file-pdf' : 'fa-file-lines';
+
+        return `
+          <div class="doc-item-card" data-doc-id="${escapeHtml(d.id)}">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="font-weight: 600; color: #ffffff;">
+                <i class="fa-solid ${iconClass}" style="color: #d4af37; margin-right: 8px;"></i>
+                ${escapeHtml(d.title || 'Untitled Document')}
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 0.75rem; color: ${statusColor};">
+                  <i class="fa-solid fa-clock-rotate-left"></i> ${escapeHtml(statusLabel)}
+                </span>
+                <button class="btn-icon-xs" onclick="window.handleDeleteDoc('${escapeHtml(d.id)}')" title="Delete document">
+                  <i class="fa-regular fa-trash-can" style="color: #f87171;"></i>
+                </button>
+              </div>
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">
+              ${escapeHtml(d.description || (d.file_path ? `Path: ${d.file_path}` : 'Private knowledge record'))}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+    } catch (e) {
+      list.innerHTML = `
+        <div class="empty-state-card" style="padding: 24px;">
+          <p style="color: #f87171;">Failed to load documents: ${escapeHtml(e.message)}</p>
+        </div>
+      `;
+    }
   }
+
+  window.handleDeleteDoc = async function(id) {
+    if (!confirm('Are you sure you want to remove this document?')) return;
+    try {
+      if (window.JarvisAPI) {
+        await window.JarvisAPI.deleteFile(id);
+      }
+      loadKnowledgeDocs();
+    } catch (err) {
+      alert('Failed to delete document: ' + err.message);
+    }
+  };
 
   // --- 18. Dynamic Conversation History Loader ---
   const btnRefreshHistory = document.getElementById('btn-refresh-history');
@@ -1698,17 +1856,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (conversations.length === 0) {
-        conversations = [
-          { id: 'c1', title: 'Weekly schedule plan', updated_at: new Date().toISOString() },
-          { id: 'c2', title: 'Google Drive Q3 report', updated_at: new Date(Date.now() - 86400000).toISOString() },
-          { id: 'c3', title: 'Mega backup sync', updated_at: new Date(Date.now() - 172800000).toISOString() }
-        ];
+        historyList.innerHTML = `<div class="history-empty"><i class="fa-regular fa-comment-dots"></i> No conversations yet</div>`;
+        return;
       }
 
       historyList.innerHTML = conversations.map(c => `
-        <div class="history-item" onclick="window.handleSelectConversation('${escapeHtml(c.id)}', '${escapeHtml(c.title)}')">
-          <i class="fa-regular fa-comment"></i>
-          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(c.title)}</span>
+        <div class="history-item ${c.id === activeConversationId ? 'active' : ''}" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; cursor: pointer; border-radius: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden;" onclick="window.handleSelectConversation('${escapeHtml(c.id)}')">
+            <i class="fa-regular fa-comment" style="color: ${c.id === activeConversationId ? '#d4af37' : 'inherit'};"></i>
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem;">${escapeHtml(c.title || 'Chat')}</span>
+          </div>
+          <button class="btn-icon-xs" style="opacity: 0.6; padding: 2px;" onclick="event.stopPropagation(); window.handleDeleteConversation('${escapeHtml(c.id)}')" title="Delete chat">
+            <i class="fa-regular fa-trash-can" style="font-size: 0.72rem; color: #f87171;"></i>
+          </button>
         </div>
       `).join('');
 
@@ -1717,11 +1877,59 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  window.handleSelectConversation = function(id, title) {
+  window.handleSelectConversation = async function(id) {
+    activeConversationId = id;
     switchView('new-chat');
     if (unifiedChatLayout) unifiedChatLayout.classList.add('chat-active');
-    appendUserChatMessage(`Resume chat: ${title}`);
-    appendJarvisChatResponse(`Restored conversation session "${title}". You can continue typing commands or voice instructions.`);
+    chatStreamContainer.innerHTML = `
+      <div class="empty-state-card" style="padding: 20px;">
+        <i class="fa-solid fa-circle-notch fa-spin empty-icon"></i>
+        <p>Restoring conversation messages...</p>
+      </div>
+    `;
+
+    try {
+      if (window.JarvisAPI) {
+        const res = await window.JarvisAPI.getConversation(id);
+        const messages = res.messages || [];
+        chatStreamContainer.innerHTML = '';
+        if (messages.length === 0) {
+          appendJarvisChatResponse({ reply: 'Conversation restored. How can I assist you?', provider: 'JARVIS', model: 'Ready' });
+        } else {
+          messages.forEach(m => {
+            if (m.role === 'user') {
+              appendUserChatMessage(m.content);
+            } else if (m.role === 'assistant') {
+              appendJarvisChatResponse({
+                reply: m.content,
+                provider: m.provider || 'AI Core',
+                model: m.model || 'Active'
+              });
+            }
+          });
+        }
+      }
+      loadConversationHistory();
+    } catch (e) {
+      chatStreamContainer.innerHTML = `<div class="empty-state-card"><p style="color: #f87171;">Failed to restore conversation: ${escapeHtml(e.message)}</p></div>`;
+    }
+  };
+
+  window.handleDeleteConversation = async function(id) {
+    if (!confirm('Are you sure you want to delete this conversation?')) return;
+    try {
+      if (window.JarvisAPI) {
+        await window.JarvisAPI.deleteConversation(id);
+      }
+      if (activeConversationId === id) {
+        activeConversationId = null;
+        chatStreamContainer.innerHTML = '';
+        if (unifiedChatLayout) unifiedChatLayout.classList.remove('chat-active');
+      }
+      loadConversationHistory();
+    } catch (err) {
+      alert('Failed to delete conversation: ' + err.message);
+    }
   };
 
 

@@ -78,8 +78,29 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // 4. Construct System Prompt with Knowledge Engine context
-    const systemPrompt = generateSystemPrompt();
+    // 4. Construct Dynamic System Prompt with Live Profile & Memory Context
+    const { data: profile } = await client
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+
+    const { data: memories } = await client
+      .from('memory_items')
+      .select('category, key, value')
+      .eq('user_id', userId)
+      .eq('is_approved', true)
+      .limit(20);
+
+    const { retrieveKnowledgeContext } = require('../lib/knowledge');
+    const ragContext = await retrieveKnowledgeContext(client, userId, message.trim());
+
+    const systemPrompt = generateSystemPrompt({
+      ownerProfile: profile,
+      memories: memories || [],
+      ragContext
+    });
+
     const modelMessages = [
       { role: 'system', content: systemPrompt },
       ...historyMessages.filter(m => m.role !== 'system')
@@ -95,22 +116,29 @@ module.exports = async function handler(req, res) {
       messages: modelMessages
     });
 
-    // 6. Persist Assistant Response
-    if (activeConvId && aiResult.content) {
-      await client.from('messages').insert({
-        conversation_id: activeConvId,
-        user_id: userId,
-        role: 'assistant',
-        content: aiResult.content,
-        provider: aiResult.provider,
-        model: aiResult.model,
-        metadata: {
-          latencyMs: aiResult.latencyMs,
-          usage: aiResult.usage,
-          taskType: aiResult.taskType,
-          isFallback: aiResult.isFallback || false
-        }
-      });
+    // 6. Persist Assistant Response & Touch Conversation updated_at
+    if (activeConvId) {
+      if (aiResult.content) {
+        await client.from('messages').insert({
+          conversation_id: activeConvId,
+          user_id: userId,
+          role: 'assistant',
+          content: aiResult.content,
+          provider: aiResult.provider,
+          model: aiResult.model,
+          metadata: {
+            latencyMs: aiResult.latencyMs,
+            usage: aiResult.usage,
+            taskType: aiResult.taskType,
+            isFallback: aiResult.isFallback || false
+          }
+        });
+      }
+
+      await client
+        .from('conversations')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', activeConvId);
     }
 
     // 7. Security Audit

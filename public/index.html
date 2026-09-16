@@ -592,19 +592,23 @@
             </div>
           </div>
 
-          <!-- TAB 3: Knowledge Base & Indexed Documents -->
+          <!-- TAB 3: Knowledge Base & Stored Documents -->
           <div id="settings-tab-knowledge" class="settings-tab-content">
             <div class="settings-card full-width">
               <div class="card-header-flex">
                 <div>
-                  <h3>Indexed Documents (RAG)</h3>
-                  <p class="card-desc">Documents and reports indexed into vector embeddings for semantic retrieval.</p>
+                  <h3>Stored Documents & Knowledge Base</h3>
+                  <p class="card-desc">Private documents and reference materials available to NAD JARVIS for context.</p>
                 </div>
-                <button id="btn-refresh-knowledge" class="btn-secondary-sm"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                <div style="display: flex; gap: 8px;">
+                  <input type="file" id="knowledge-file-input-hidden" style="display: none;">
+                  <button id="btn-upload-knowledge" class="btn-secondary-sm"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Doc</button>
+                  <button id="btn-refresh-knowledge" class="btn-secondary-sm"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                </div>
               </div>
 
               <div id="knowledge-docs-list" class="knowledge-docs-list">
-                <div class="empty-state-card"><i class="fa-solid fa-book-bookmark empty-icon"></i><p>Loading indexed documents...</p></div>
+                <div class="empty-state-card"><i class="fa-solid fa-book-bookmark empty-icon"></i><p>Loading stored documents...</p></div>
               </div>
             </div>
           </div>
@@ -642,6 +646,10 @@
       <p>Schedule an event directly into your connected Google Calendar.</p>
 
       <form id="form-create-cal-event" style="display: flex; flex-direction: column; gap: 12px; text-align: left; margin-top: 14px;">
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted);">Target Google Account</label>
+          <select id="cal-event-account" class="settings-input" style="width: 100%; margin-top: 4px;"></select>
+        </div>
         <div>
           <label style="font-size: 0.8rem; color: var(--text-muted);">Event Title</label>
           <input type="text" id="cal-event-title" required class="settings-input" placeholder="e.g. SAEV Capstone Team Review" style="width: 100%; margin-top: 4px;">

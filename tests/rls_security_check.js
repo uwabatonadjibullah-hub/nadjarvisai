@@ -23,6 +23,7 @@ const TABLES_TO_TEST = [
   'documents',
   'memory_items',
   'tasks',
+  'todo_items',
   'scheduled_jobs',
   'audit_events'
 ];

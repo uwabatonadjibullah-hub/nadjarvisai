@@ -94,27 +94,32 @@ CREATE TABLE IF NOT EXISTS public.provider_usage (
 );
 
 -- 8. External Connections Table (Google Workspace, Mega Storage, etc.)
+-- Supports ONE owner with MULTIPLE connected accounts (e.g. personal, work, school Google accounts)
 CREATE TABLE IF NOT EXISTS public.connections (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     provider TEXT NOT NULL CHECK (provider IN ('google', 'mega', 'other')),
     account_identifier TEXT NOT NULL,
+    nickname TEXT NOT NULL DEFAULT 'Google Account',
     status TEXT NOT NULL DEFAULT 'connected' CHECK (status IN ('connected', 'disconnected', 'expired')),
     encrypted_refresh_token TEXT,
     scopes TEXT[] NOT NULL DEFAULT '{}',
     metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_connections_user_provider_account UNIQUE (user_id, provider, account_identifier)
 );
 
--- 9. Drive Sources Table (Nicknamed Drive Connections & Scopes)
+-- 9. Drive Sources Table (Nicknamed Drive Connections & Scopes, associated with specific connection)
 CREATE TABLE IF NOT EXISTS public.drive_sources (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    account_id UUID REFERENCES public.connections(id) ON DELETE CASCADE,
     nickname TEXT NOT NULL,
     folder_id TEXT NOT NULL DEFAULT 'root',
     scope_granted TEXT NOT NULL DEFAULT 'drive.readonly',
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_drive_sources_user_nickname UNIQUE (user_id, nickname)
 );
 
 -- 10. Documents Table (Pointers & Metadata, NOT Full Content)
@@ -146,7 +151,7 @@ CREATE TABLE IF NOT EXISTS public.memory_items (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 12. Tasks Table (Background Queued Work Items)
+-- 12. Tasks Table (Background Queued Work Items for AI & System Jobs)
 CREATE TABLE IF NOT EXISTS public.tasks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -155,6 +160,18 @@ CREATE TABLE IF NOT EXISTS public.tasks (
     status TEXT NOT NULL DEFAULT 'queued' CHECK (status IN ('queued', 'in_progress', 'completed', 'failed')),
     result JSONB,
     error TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 12b. Todo Items Table (User-Facing Personal Tasks & Checklist Items)
+CREATE TABLE IF NOT EXISTS public.todo_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+    due_date DATE,
+    is_completed BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -198,6 +215,7 @@ ALTER TABLE public.drive_sources ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.memory_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.todo_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.scheduled_jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_events ENABLE ROW LEVEL SECURITY;
 
@@ -273,6 +291,13 @@ CREATE POLICY "Owner memory items access" ON public.memory_items
 -- Tasks policy
 DROP POLICY IF EXISTS "Owner tasks access" ON public.tasks;
 CREATE POLICY "Owner tasks access" ON public.tasks
+    FOR ALL TO authenticated
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+-- Todo Items policy
+DROP POLICY IF EXISTS "Owner todo items access" ON public.todo_items;
+CREATE POLICY "Owner todo items access" ON public.todo_items
     FOR ALL TO authenticated
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);

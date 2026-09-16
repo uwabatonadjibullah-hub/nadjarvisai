@@ -17,7 +17,11 @@
 
 const { verifyOwnerSession } = require('../lib/auth');
 const { logAuditEvent } = require('../lib/audit');
-const { PERSONAL_KNOWLEDGE_BASE } = require('../lib/knowledge');
+
+const DEFAULT_WEEKLY_CONFIG = {
+  weekStart: 'Saturday',
+  weekEnd: 'Friday'
+};
 
 module.exports = async function handler(req, res) {
   const isDueQuery = req.query.due === '1' || req.query.action === 'due';
@@ -85,7 +89,7 @@ module.exports = async function handler(req, res) {
 
       return res.status(200).json({
         status: 'success',
-        weeklySchedule: PERSONAL_KNOWLEDGE_BASE.weeklySchedule,
+        weeklySchedule: DEFAULT_WEEKLY_CONFIG,
         scheduledJobs: jobs || []
       });
     } catch (err) {

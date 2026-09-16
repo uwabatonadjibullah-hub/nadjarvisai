@@ -106,5 +106,35 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  // DELETE: Remove memory item
+  if (req.method === 'DELETE') {
+    const memoryId = req.query.id || (req.body && req.body.id);
+    if (!memoryId) {
+      return res.status(400).json({ error: 'Missing memory id for deletion.' });
+    }
+
+    try {
+      const { error: delErr } = await client
+        .from('memory_items')
+        .delete()
+        .eq('id', memoryId)
+        .eq('user_id', userId);
+
+      if (delErr) return res.status(500).json({ error: delErr.message });
+
+      await logAuditEvent({
+        userId,
+        action: 'memory.deleted',
+        resource: 'memory_items',
+        details: { memoryId },
+        req
+      });
+
+      return res.status(200).json({ status: 'success', message: 'Memory item deleted successfully.' });
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to delete memory item' });
+    }
+  }
+
   return res.status(405).json({ error: 'Method Not Allowed' });
 };

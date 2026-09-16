@@ -27,7 +27,7 @@ const { checkRateLimit } = require('../../lib/rateLimit');
 const { listDriveFiles, readDriveFile, uploadToDrive } = require('../../lib/google/drive');
 const { listCalendarEvents, createCalendarEvent } = require('../../lib/google/calendar');
 const { readGmailMessage, searchGmail } = require('../../lib/google/gmail');
-const { listConnectedAccounts } = require('../../lib/google/oauth');
+const { listConnectedAccounts, disconnectAccount } = require('../../lib/google/oauth');
 
 module.exports = async function handler(req, res) {
   // Rate limit all workspace operations
@@ -40,12 +40,15 @@ module.exports = async function handler(req, res) {
 
   const action = req.query.action;
   const body = req.body || {};
+  if (req.query.accountId) {
+    body.accountId = body.accountId || req.query.accountId;
+  }
 
   if (!action) {
     return res.status(400).json({
       error: 'Missing ?action parameter.',
       availableActions: [
-        'accounts.list',
+        'accounts.list', 'accounts.disconnect',
         'drive.list', 'drive.read', 'drive.upload',
         'calendar.list', 'calendar.create',
         'gmail.read', 'gmail.search'
@@ -61,6 +64,11 @@ module.exports = async function handler(req, res) {
       case 'accounts.list':
         if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
         result = await listConnectedAccounts({ auth, req });
+        break;
+
+      case 'accounts.disconnect':
+        if (req.method !== 'POST' && req.method !== 'DELETE') return res.status(405).json({ error: 'Method Not Allowed' });
+        result = await disconnectAccount({ auth, body, req });
         break;
 
       // ── Drive ────────────────────────────────────────────────────────────────
@@ -113,7 +121,7 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({
           error: `Unknown action "${action}".`,
           availableActions: [
-            'accounts.list',
+            'accounts.list', 'accounts.disconnect',
             'drive.list', 'drive.read', 'drive.upload',
             'calendar.list', 'calendar.create',
             'gmail.read', 'gmail.search'

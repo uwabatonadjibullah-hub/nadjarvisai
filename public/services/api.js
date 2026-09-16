@@ -195,8 +195,38 @@
       return this.post('/api/memory', item);
     }
 
+    async deleteMemory(id) {
+      return this.delete('/api/memory', { id });
+    }
+
+    // ── Files & Document Storage Endpoints ─────────────────────
     async getFiles(folderId = 'root') {
       return this.get('/api/files', { folderId });
+    }
+
+    async getFile(id) {
+      return this.get('/api/files', { id });
+    }
+
+    async uploadFile(payload) {
+      return this.post('/api/files', payload);
+    }
+
+    async deleteFile(id) {
+      return this.delete('/api/files', { id });
+    }
+
+    // ── Chat & Schedule Endpoints ──────────────────────────────
+    async sendMessage(message, conversationId = null) {
+      return this.post('/api/chat', { message, conversationId });
+    }
+
+    async getSchedule(isDue = false) {
+      return this.get('/api/schedule', isDue ? { due: '1' } : {});
+    }
+
+    async saveScheduleJob(job) {
+      return this.post('/api/schedule', job);
     }
   }
 

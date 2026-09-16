@@ -1,16 +1,26 @@
 /**
  * public/services/google.js
  * Google Workspace and OAuth client service for NAD JARVIS frontend
+ * Supports multi-account operations (Personal, Work, School).
  */
 
 (function () {
   class GoogleWorkspaceService {
     constructor(apiClient) {
       this.api = apiClient || window.JarvisAPI;
+      this.selectedAccountId = null;
     }
 
     getApiClient() {
       return this.api || window.JarvisAPI;
+    }
+
+    setSelectedAccount(accountId) {
+      this.selectedAccountId = accountId;
+    }
+
+    getSelectedAccount() {
+      return this.selectedAccountId;
     }
 
     /**
@@ -21,10 +31,20 @@
     }
 
     /**
-     * Start Google OAuth flow (fetches authUrl and redirects)
+     * Disconnect a Google account
      */
-    async initiateOAuth() {
-      const data = await this.getApiClient().get('/api/google/oauth', { action: 'start' });
+    async disconnectAccount(accountId) {
+      return this.getApiClient().post('/api/google/workspace', { accountId }, { action: 'accounts.disconnect' });
+    }
+
+    /**
+     * Start Google OAuth flow with custom nickname
+     */
+    async initiateOAuth(nickname = '') {
+      const params = { action: 'start' };
+      if (nickname) params.nickname = nickname;
+
+      const data = await this.getApiClient().get('/api/google/oauth', params);
       if (data && data.authUrl) {
         window.location.href = data.authUrl;
       }
@@ -34,50 +54,81 @@
     /**
      * List Google Drive files
      */
-    async listDriveFiles(folderId = 'root', nickname = "Nad's Google Drive") {
-      return this.getApiClient().post('/api/google/workspace', { folderId, nickname }, { action: 'drive.list' });
+    async listDriveFiles(folderId = 'root', accountId = null) {
+      const targetAccountId = accountId || this.selectedAccountId;
+      return this.getApiClient().post('/api/google/workspace', {
+        folderId,
+        accountId: targetAccountId
+      }, { action: 'drive.list' });
     }
 
     /**
      * Read a Google Drive file content
      */
-    async readDriveFile(fileId) {
-      return this.getApiClient().post('/api/google/workspace', { fileId }, { action: 'drive.read' });
+    async readDriveFile(fileId, accountId = null) {
+      const targetAccountId = accountId || this.selectedAccountId;
+      return this.getApiClient().post('/api/google/workspace', {
+        fileId,
+        accountId: targetAccountId
+      }, { action: 'drive.read' });
     }
 
     /**
      * Upload a file to Google Drive
      */
-    async uploadToDrive(filePayload) {
-      return this.getApiClient().post('/api/google/workspace', filePayload, { action: 'drive.upload' });
+    async uploadToDrive(filePayload, accountId = null) {
+      const targetAccountId = accountId || this.selectedAccountId;
+      return this.getApiClient().post('/api/google/workspace', {
+        ...filePayload,
+        accountId: targetAccountId,
+        confirmed: true
+      }, { action: 'drive.upload' });
     }
 
     /**
      * List calendar events
      */
-    async listCalendarEvents(timeMin, timeMax) {
-      return this.getApiClient().post('/api/google/workspace', { timeMin, timeMax }, { action: 'calendar.list' });
+    async listCalendarEvents(timeMin = null, timeMax = null, accountId = null) {
+      const targetAccountId = accountId || this.selectedAccountId;
+      return this.getApiClient().post('/api/google/workspace', {
+        timeMin,
+        timeMax,
+        accountId: targetAccountId
+      }, { action: 'calendar.list' });
     }
 
     /**
      * Create a calendar event
      */
-    async createCalendarEvent(eventData) {
-      return this.getApiClient().post('/api/google/workspace', eventData, { action: 'calendar.create' });
+    async createCalendarEvent(eventData, accountId = null) {
+      const targetAccountId = accountId || this.selectedAccountId;
+      return this.getApiClient().post('/api/google/workspace', {
+        ...eventData,
+        accountId: targetAccountId,
+        confirmed: true
+      }, { action: 'calendar.create' });
     }
 
     /**
      * Read a Gmail message
      */
-    async readGmail(messageId) {
-      return this.getApiClient().post('/api/google/workspace', { messageId }, { action: 'gmail.read' });
+    async readGmail(messageId, accountId = null) {
+      const targetAccountId = accountId || this.selectedAccountId;
+      return this.getApiClient().post('/api/google/workspace', {
+        messageId,
+        accountId: targetAccountId
+      }, { action: 'gmail.read' });
     }
 
     /**
      * Search Gmail
      */
-    async searchGmail(query) {
-      return this.getApiClient().post('/api/google/workspace', { query }, { action: 'gmail.search' });
+    async searchGmail(query, accountId = null) {
+      const targetAccountId = accountId || this.selectedAccountId;
+      return this.getApiClient().post('/api/google/workspace', {
+        query,
+        accountId: targetAccountId
+      }, { action: 'gmail.search' });
     }
   }
 
