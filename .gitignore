@@ -4,12 +4,14 @@ node_modules/
 .pnp.js
 
 # Environment Variables (NEVER COMMIT SECRETS)
-.env
+# .env — allowed to commit if it only contains public-safe vars (SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
+# Uncomment the line below if you ever add secrets back to .env:
+# .env
 .env.local
+.env.*.local
 .env.development.local
 .env.test.local
 .env.production.local
-*.env
 
 # Vercel
 .vercel
